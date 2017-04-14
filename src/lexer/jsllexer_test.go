@@ -14,38 +14,43 @@ func TestNewJslLexer(t *testing.T) {
 	}
 }
 
-func TestGetNext(t *testing.T) {
+func TestUnicode(t *testing.T) {
+	doTestGetNext(t, "ϝЄ", []lexer.Lexeme{makeLexeme("ϝЄ", lexer.LIdentifier, 1)})
+}
 
-	cases := []struct{
-		in string
-		out []lexer.Lexeme
-	}{
-		{
-			"ϝЄ",
-			[]lexer.Lexeme{makeLexeme("ϝЄ", lexer.LIdentifier, 1)},
-		},
-		{
-			"foobar",
-			[]lexer.Lexeme{
-				makeLexeme("foobar", lexer.LIdentifier, 1),
-			},
-		},
-		{
-			"foo\"bar\"",
-			[]lexer.Lexeme{
-				makeLexeme("foo", lexer.LIdentifier, 1),
-				makeLexeme("bar", lexer.LString, 4),
-			},
-		},
-	}
+func TestSingleIdentifier(t *testing.T) {
+	doTestGetNext(t, "foobar", []lexer.Lexeme{makeLexeme("foobar", lexer.LIdentifier, 1)})
+}
 
-	for _, testcase := range cases {
-		assertLexemes(
-			t,
-			lexer.NewJslLexer(getReader(testcase.in)),
-			testcase.out,
-		)
-	}
+func TestIdentifierAndString(t *testing.T) {
+	doTestGetNext(
+		t,
+		"foo\"bar\"",
+		[]lexer.Lexeme{
+			makeLexeme("foo", lexer.LIdentifier, 1),
+			makeLexeme("bar", lexer.LQuoted, 4),
+		},
+	)
+}
+
+func TestIdentWsString(t *testing.T) {
+	doTestGetNext(
+		t,
+		"foo \"bar\"",
+		[]lexer.Lexeme{
+			makeLexeme("foo", lexer.LIdentifier, 1),
+			makeLexeme(" ", lexer.LWhitespace, 4),
+			makeLexeme("bar", lexer.LQuoted, 5),
+		},
+	)
+}
+
+func doTestGetNext(t *testing.T, in string, expected []lexer.Lexeme) {
+	assertLexemes(
+		t,
+		lexer.NewJslLexer(getReader(in)),
+		expected,
+	)
 }
 
 func assertLexemes(t *testing.T, l lexer.Lexer, expected []lexer.Lexeme) {
@@ -53,7 +58,7 @@ func assertLexemes(t *testing.T, l lexer.Lexer, expected []lexer.Lexeme) {
 		current, err := l.GetNext()
 
 		if err != nil {
-			t.Errorf("Unexpected err %v", err)
+			t.Fatalf("Unexpected error: %v", err)
 		}
 
 		if current != s {

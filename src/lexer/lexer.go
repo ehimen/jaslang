@@ -8,7 +8,7 @@ import (
 type LexemeType string
 
 const (
-	LString LexemeType = "string"
+	LQuoted     LexemeType = "quoted"
 	LIdentifier LexemeType = "identifier"
 	LWhitespace LexemeType = "whitespace"
 )
