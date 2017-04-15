@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"lex"
+	"strings"
 )
 
 func main() {
-	fmt.Print(string(0))
+	lex.NewJslLexer(strings.NewReader("foobar"))
+	fmt.Printf("%s", "Done")
 }
