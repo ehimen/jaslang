@@ -6,7 +6,7 @@ import (
 )
 
 type jslLexer struct {
-	reader      io.RuneScanner
+	reader      io.RuneReader
 	ch          chan Lexeme
 	position    int
 	start       int
@@ -15,10 +15,9 @@ type jslLexer struct {
 	err         error
 	lookahead   []string
 	initialised bool
-	operators   []string
 }
 
-func NewJslLexer(reader io.RuneScanner, operators []string) Lexer {
+func NewJslLexer(reader io.RuneReader) Lexer {
 	return &jslLexer{
 		reader,
 		make(chan Lexeme, 1),
@@ -29,7 +28,6 @@ func NewJslLexer(reader io.RuneScanner, operators []string) Lexer {
 		nil,
 		make([]string, 2),
 		false,
-		operators,
 	}
 }
 
@@ -147,11 +145,15 @@ func isIdentifierStartCharacter(str string) bool {
 }
 
 func isIdentifierCharacter(str string) bool {
-	return !isQuote(str) && !isSpace(str) && !isSpecialSymbol(str)
+	return !isQuote(str) && !isSpace(str) && !isSpecialSymbol(str) && len(str) > 0 && !isOperatorCharacter(str)
 }
 
-func isSpecialSymbol(next string) bool {
-	return strings.IndexAny(next, "{}();") == 0
+func isSpecialSymbol(str string) bool {
+	return strings.IndexAny(str, "{}();") == 0
+}
+
+func isOperatorCharacter(str string) bool {
+	return strings.IndexAny(str, OperatorSymbols) == 0
 }
 
 type stateFunction func(l *jslLexer) (stateFunction, error)
@@ -172,6 +174,8 @@ func defaultState(l *jslLexer) (stateFunction, error) {
 		return characterState, nil
 	case strings.IndexAny(next, "+-0123456789") == 0:
 		return numberState, nil
+	case isOperatorCharacter(next):
+		return operatorState, nil
 	case isIdentifierStartCharacter(next):
 		return identifierState, nil
 	}
@@ -194,7 +198,7 @@ func numberState(l *jslLexer) (stateFunction, error) {
 
 			if strings.IndexAny(nextNext, "0123456789") != 0 {
 				// A sign not followed by any digits, this isn't a number
-				return identifierState, nil
+				return operatorState, nil
 			}
 
 			l.next()
@@ -281,6 +285,8 @@ func spaceState(l *jslLexer) (stateFunction, error) {
 		}
 	}
 
+	l.emit(LWhitespace)
+
 	return nil, EndOfInput
 }
 
@@ -295,15 +301,59 @@ func identifierState(l *jslLexer) (stateFunction, error) {
 
 		l.next()
 
-		for _, operator := range l.operators {
-			if operator == l.current {
-				l.emit(LOperator)
-				return defaultState, nil
-			}
+		if ltype, isSpecialToken := checkSpecialToken(l); isSpecialToken {
+			l.emit(ltype)
+			return defaultState, nil
 		}
 	}
 
 	l.emit(LIdentifier)
 
 	return nil, EndOfInput
+}
+
+func operatorState(l *jslLexer) (stateFunction, error) {
+	for l.has() {
+		next := l.peek()
+
+		if !isOperatorCharacter(next) {
+			l.emit(LOperator)
+			return defaultState, nil
+		}
+
+		l.next()
+	}
+
+	l.emit(LOperator)
+
+	return nil, EndOfInput
+}
+
+func checkSpecialToken(l *jslLexer) (LexemeType, bool) {
+	var ltype LexemeType
+
+	current := l.current
+
+	if isIdentifierCharacter(l.peek()) {
+		// If the next character could be part
+		// of identifier, we this isn't a complete
+		// token, so it can't be a special token.
+		return ltype, false
+	}
+
+	for _, keyword := range Keywords {
+		if keyword.is(current) {
+			return keyword, true
+		}
+	}
+
+	if strings.ToLower(current) == "true" {
+		return LBoolTrue, true
+	}
+
+	if strings.ToLower(current) == "false" {
+		return LBoolFalse, true
+	}
+
+	return ltype, false
 }

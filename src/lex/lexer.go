@@ -7,6 +7,10 @@ import (
 
 type LexemeType string
 
+func (ltype LexemeType) is(str string) bool {
+	return str == string(ltype)
+}
+
 const (
 	LQuoted     LexemeType = "quoted"
 	LIdentifier LexemeType = "identifier"
@@ -18,7 +22,18 @@ const (
 	LSemiColon  LexemeType = "semi-colon"
 	LNumber     LexemeType = "number"
 	LOperator   LexemeType = "operator"
+	LIf         LexemeType = "if"
+	LElse       LexemeType = "else"
+	LElseIf     LexemeType = "elseif"
+	LWhile      LexemeType = "while"
+	LLet        LexemeType = "let"
+	LBoolTrue   LexemeType = "true"
+	LBoolFalse  LexemeType = "false"
+
+	OperatorSymbols string = "+-.^*&/|=>!:"
 )
+
+var Keywords = []LexemeType{LIf, LElse, LElseIf, LLet, LWhile}
 
 type Lexeme struct {
 	Start int
