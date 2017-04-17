@@ -1,9 +1,10 @@
 package lex_test
 
 import (
-	"lex"
 	"strings"
 	"testing"
+
+	"github.com/ehimen/jaslang/lex"
 )
 
 func TestNewJslLexer(t *testing.T) {

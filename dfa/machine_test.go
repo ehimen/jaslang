@@ -1,8 +1,9 @@
 package dfa_test
 
 import (
-	"dfa"
 	"testing"
+
+	"github.com/ehimen/jaslang/dfa"
 )
 
 func TestNewMachine(t *testing.T) {
