@@ -51,11 +51,11 @@ func NewParser(lexer lex.Lexer) Parser {
 	quoted := string(lex.LQuoted)
 	term := string(lex.LSemiColon)
 
-	builder.Path(start, identifier, identifier)
-	builder.Path(identifier, parenOpen, parenOpen)
-	builder.Path(parenOpen, quoted, quoted)
-	builder.Path(quoted, parenClose, parenClose)
-	builder.Path(parenClose, term, term)
+	builder.Path(start, identifier)
+	builder.Path(identifier, parenOpen)
+	builder.Path(parenOpen, quoted)
+	builder.Path(quoted, parenClose)
+	builder.Path(parenClose, term)
 
 	builder.WhenEntering(identifier, parser.createIdentifier)
 	builder.WhenEntering(quoted, parser.createStringLiteral)

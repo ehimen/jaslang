@@ -1,7 +1,7 @@
 package dfa
 
 type MachineBuilder interface {
-	Path(string, string, string)
+	Path(string, string)
 	WhenEntering(string, func()) error
 	Accept(string) error
 	Start(string) (Machine, error)
@@ -15,7 +15,7 @@ func NewMachineBuilder() MachineBuilder {
 	return &machineBuilder{newMachine()}
 }
 
-func (builder *machineBuilder) Path(from string, via string, to string) {
+func (builder *machineBuilder) Path(from string, to string) {
 	if _, exists := builder.machine.states[from]; !exists {
 		builder.machine.states[from] = newState(from)
 	}
@@ -24,7 +24,7 @@ func (builder *machineBuilder) Path(from string, via string, to string) {
 		builder.machine.states[to] = newState(to)
 	}
 
-	builder.machine.states[from].paths[via] = builder.machine.states[to]
+	builder.machine.states[from].paths[to] = builder.machine.states[to]
 }
 
 func (builder *machineBuilder) Accept(what string) error {
