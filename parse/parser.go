@@ -98,11 +98,11 @@ func (p *parser) push(node Node) {
 
 	context = getContext(p)
 
-	if parent, isParent := context.(ParentNode); isParent {
+	if parent, isParent := context.(ContainsChildren); isParent {
 		parent.Push(node)
 	}
 
-	if parent, isParent := node.(ParentNode); isParent {
+	if parent, isParent := node.(ContainsChildren); isParent {
 		p.nodeStack = append(p.nodeStack, parent)
 	}
 }

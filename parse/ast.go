@@ -3,8 +3,18 @@ package parse
 type Node interface {
 }
 
-type ParentNode interface {
-	Push(node Node)
+type ContainsChildren interface {
+	Push(child Node)
+}
+
+// Can be embedded in to all node types that
+// have children.
+type ParentNode struct {
+	Children []Node
+}
+
+func (parent *ParentNode) Push(child Node) {
+	parent.Children = append(parent.Children, child)
 }
 
 type RootNode struct {
@@ -16,20 +26,12 @@ func (root *RootNode) PushStatement(statement *Statement) {
 }
 
 type Statement struct {
-	Children []Node
-}
-
-func (statement *Statement) Push(node Node) {
-	statement.Children = append(statement.Children, node)
+	ParentNode
 }
 
 type FunctionCall struct {
 	Identifier string
-	Children   []Node
-}
-
-func (functionCall *FunctionCall) Push(node Node) {
-	functionCall.Children = append(functionCall.Children, node)
+	ParentNode
 }
 
 type StringLiteral struct {

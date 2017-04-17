@@ -22,12 +22,16 @@ func TestSimpleFunctionCall(t *testing.T) {
 	expected := parse.RootNode{
 		Statements: []*parse.Statement{
 			{
-				Children: []parse.Node{
-					&parse.FunctionCall{
-						Identifier: "print",
-						Children: []parse.Node{
-							&parse.StringLiteral{
-								Value: "Hello, world!",
+				ParentNode: parse.ParentNode{
+					Children: []parse.Node{
+						&parse.FunctionCall{
+							Identifier: "print",
+							ParentNode: parse.ParentNode{
+								Children: []parse.Node{
+									&parse.StringLiteral{
+										Value: "Hello, world!",
+									},
+								},
 							},
 						},
 					},
