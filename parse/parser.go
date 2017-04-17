@@ -5,10 +5,12 @@ import (
 
 	"github.com/ehimen/jaslang/dfa"
 	"github.com/ehimen/jaslang/lex"
+	"strconv"
+	"errors"
 )
 
 type Parser interface {
-	Parse() RootNode
+	Parse() (RootNode, error)
 }
 
 type parser struct {
@@ -19,7 +21,13 @@ type parser struct {
 	statementStack []Statement
 }
 
-func (p *parser) Parse() RootNode {
+type SyntaxError error
+
+func InvalidNumberSyntax(number string) SyntaxError {
+	return SyntaxError(errors.New(fmt.Sprintf("Invalid syntax for number, %s", number)))
+}
+
+func (p *parser) Parse() (RootNode, error) {
 	root := &RootNode{}
 
 	p.nodeStack = []Node{root}
@@ -31,12 +39,19 @@ func (p *parser) Parse() RootNode {
 			break
 		}
 
+		// We don't care about whitespace
+		if lexeme.Type == lex.LWhitespace {
+			continue
+		}
+
 		p.current = lexeme
 
-		p.dfa.Transition(string(lexeme.Type))
+		if err := p.dfa.Transition(string(lexeme.Type)); err != nil {
+			return *root, err
+		}
 	}
 
-	return *root
+	return *root, nil
 }
 
 func NewParser(lexer lex.Lexer) Parser {
@@ -50,16 +65,22 @@ func NewParser(lexer lex.Lexer) Parser {
 	parenClose := string(lex.LParenClose)
 	quoted := string(lex.LQuoted)
 	term := string(lex.LSemiColon)
+	number := string(lex.LNumber)
 
+	builder.Path(start, number)
 	builder.Path(start, identifier)
 	builder.Path(identifier, parenOpen)
 	builder.Path(parenOpen, quoted)
 	builder.Path(quoted, parenClose)
 	builder.Path(parenClose, term)
+	builder.Path(number, term)
+	builder.Path(term, number)
 
 	builder.WhenEntering(identifier, parser.createIdentifier)
 	builder.WhenEntering(quoted, parser.createStringLiteral)
 	builder.WhenEntering(parenClose, parser.closeNode)
+	builder.WhenEntering(term, parser.closeNode)
+	builder.WhenEntering(number, parser.createNumberLiteral)
 
 	builder.Accept(term)
 
@@ -74,16 +95,32 @@ func NewParser(lexer lex.Lexer) Parser {
 	return &parser
 }
 
-func (p *parser) createIdentifier() {
+func (p *parser) createIdentifier() error {
 	p.push(&FunctionCall{Identifier: p.current.Value})
+
+	return nil
 }
 
-func (p *parser) createStringLiteral() {
+func (p *parser) createStringLiteral() error {
 	p.push(&StringLiteral{Value: p.current.Value})
+
+	return nil
 }
 
-func (p *parser) closeNode() {
+func (p *parser) createNumberLiteral() error {
+	if number, err := strconv.ParseFloat(p.current.Value, 64); err == nil {
+		p.push(&NumberLiteral{Value: number})
+	} else {
+		return InvalidNumberSyntax(p.current.Value)
+	}
+
+	return nil
+}
+
+func (p *parser) closeNode() error {
 	p.nodeStack = p.nodeStack[0 : len(p.nodeStack)-1]
+
+	return nil
 }
 
 func (p *parser) push(node Node) {

@@ -37,3 +37,7 @@ type FunctionCall struct {
 type StringLiteral struct {
 	Value string
 }
+
+type NumberLiteral struct {
+	Value float64
+}

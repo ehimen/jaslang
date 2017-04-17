@@ -2,7 +2,7 @@ package dfa
 
 type MachineBuilder interface {
 	Path(string, string)
-	WhenEntering(string, func()) error
+	WhenEntering(string, func() error) error
 	Accept(string) error
 	Start(string) (Machine, error)
 }
@@ -37,7 +37,7 @@ func (builder *machineBuilder) Accept(what string) error {
 	return nil
 }
 
-func (builder *machineBuilder) WhenEntering(where string, do func()) error {
+func (builder *machineBuilder) WhenEntering(where string, do func() error) error {
 	if err := validateState(builder.machine, where); err != nil {
 		return err
 	}

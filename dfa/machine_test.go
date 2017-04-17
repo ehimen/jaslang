@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/ehimen/jaslang/dfa"
+	"errors"
 )
 
 func TestAddState(t *testing.T) {
@@ -13,7 +14,7 @@ func TestAddState(t *testing.T) {
 }
 
 func TestWhenEnteringFailsIfStateNotExists(t *testing.T) {
-	err := getMachineBuilder().WhenEntering("not-exists", func() {})
+	err := getMachineBuilder().WhenEntering("not-exists", func() error { return nil })
 
 	if err == nil {
 		t.Error("expected WhenEntering() to fail on non-existent state, but it did not")
@@ -81,8 +82,10 @@ func TestInvalidTransition(t *testing.T) {
 func TestWhenEnteringIsCalled(t *testing.T) {
 	n := 0
 
-	inc := func() {
+	inc := func() error {
 		n++
+
+		return nil
 	}
 
 	builder := getMachineBuilder()
@@ -103,9 +106,11 @@ func TestWhenEnteringIsCalled(t *testing.T) {
 func TestMachineTrace(t *testing.T) {
 	trace := ""
 
-	getTraceFn := func(str string) func() {
-		return func() {
+	getTraceFn := func(str string) func() error {
+		return func() error {
 			trace += " " + str
+
+			return nil
 		}
 	}
 
@@ -163,6 +168,22 @@ func TestMachineCannotBeUsedAfterCompletion(t *testing.T) {
 
 	if err := machine.Finish(); err == nil {
 		t.Error("Expected second Finish() to fail as machine unusable, but it didn't")
+	}
+}
+
+func TestWhenFnFailsTransitionFails (t *testing.T) {
+	builder := getMachineBuilder()
+
+	builder.Path("origin", "origin")
+
+	expected := errors.New("Test error")
+
+	builder.WhenEntering("origin", func () error { return expected })
+
+	machine := build(builder, "origin", t)
+
+	if actual := machine.Transition("origin"); actual != expected {
+		t.Errorf("Expected Transition() to return same err as callback, but got %v", actual)
 	}
 }
 

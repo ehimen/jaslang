@@ -7,7 +7,7 @@ import (
 
 type state struct {
 	name         string
-	whenEntering []func()
+	whenEntering []func() error
 	paths        map[string]*state
 	acceptable   bool
 }
@@ -38,7 +38,7 @@ func newMachine() *machine {
 func newState(name string) *state {
 	return &state{
 		name,
-		make([]func(), 0),
+		make([]func() error, 0),
 		make(map[string]*state),
 		false,
 	}
@@ -50,14 +50,16 @@ func (machine *machine) Transition(how string) error {
 	}
 
 	if _, exists := machine.current.paths[how]; !exists {
-		return errors.New(fmt.Sprintf("Don't know how to move from %s via path %s", machine.current.name, how))
+		return errors.New(fmt.Sprintf("Don't know how to move from %s to %s", machine.current.name, how))
 	}
 
 	machine.current = machine.current.paths[how]
 
 	// Call all functions as we enter this new state
 	for _, fn := range machine.current.whenEntering {
-		fn()
+		if err := fn(); err != nil {
+			return err
+		}
 	}
 
 	return nil
