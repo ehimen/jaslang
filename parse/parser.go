@@ -3,10 +3,12 @@ package parse
 import (
 	"fmt"
 
+	"strconv"
+
+	"errors"
+
 	"github.com/ehimen/jaslang/dfa"
 	"github.com/ehimen/jaslang/lex"
-	"strconv"
-	"errors"
 )
 
 type Parser interface {
@@ -21,11 +23,16 @@ type parser struct {
 	statementStack []Statement
 }
 
-type SyntaxError error
+// TODO: Better error reporting including failing lexeme
+// TODO: Problems with type assertions on error types not
+// TODO: working in the way I expected them to.
+// TODO: e.g. "type MyError error" doesn't seem to exclusively
+// TODO: match when running err.(MyError)
+var SyntaxError = errors.New("Syntax error!")
 
-func InvalidNumberSyntax(number string) SyntaxError {
-	return SyntaxError(errors.New(fmt.Sprintf("Invalid syntax for number, %s", number)))
-}
+var InvalidNumber = errors.New("Invalid number!")
+
+var UnterminatedStatement = errors.New("Unterminated statement!")
 
 func (p *parser) Parse() (RootNode, error) {
 	root := &RootNode{}
@@ -51,6 +58,10 @@ func (p *parser) Parse() (RootNode, error) {
 		}
 	}
 
+	if err := p.dfa.Finish(); err != nil {
+		return *root, UnterminatedStatement
+	}
+
 	return *root, nil
 }
 
@@ -66,8 +77,12 @@ func NewParser(lexer lex.Lexer) Parser {
 	quoted := string(lex.LQuoted)
 	term := string(lex.LSemiColon)
 	number := string(lex.LNumber)
+	true := string(lex.LBoolTrue)
+	false := string(lex.LBoolFalse)
 
+	// TODO: would be good to group lots of common elements here (e.g. literals)
 	builder.Path(start, number)
+	builder.Path(start, true)
 	builder.Path(start, identifier)
 	builder.Path(identifier, parenOpen)
 	builder.Path(parenOpen, quoted)
@@ -75,12 +90,17 @@ func NewParser(lexer lex.Lexer) Parser {
 	builder.Path(parenClose, term)
 	builder.Path(number, term)
 	builder.Path(term, number)
+	builder.Path(term, false)
+	builder.Path(true, term)
+	builder.Path(false, term)
 
 	builder.WhenEntering(identifier, parser.createIdentifier)
 	builder.WhenEntering(quoted, parser.createStringLiteral)
 	builder.WhenEntering(parenClose, parser.closeNode)
 	builder.WhenEntering(term, parser.closeNode)
 	builder.WhenEntering(number, parser.createNumberLiteral)
+	builder.WhenEntering(true, parser.createBooleanLiteral)
+	builder.WhenEntering(false, parser.createBooleanLiteral)
 
 	builder.Accept(term)
 
@@ -107,11 +127,19 @@ func (p *parser) createStringLiteral() error {
 	return nil
 }
 
+func (p *parser) createBooleanLiteral() error {
+	value := p.current.Type == lex.LBoolTrue
+
+	p.push(&BooleanLiteral{Value: value})
+
+	return nil
+}
+
 func (p *parser) createNumberLiteral() error {
 	if number, err := strconv.ParseFloat(p.current.Value, 64); err == nil {
 		p.push(&NumberLiteral{Value: number})
 	} else {
-		return InvalidNumberSyntax(p.current.Value)
+		return InvalidNumber
 	}
 
 	return nil

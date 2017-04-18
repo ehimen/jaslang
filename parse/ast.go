@@ -38,6 +38,10 @@ type StringLiteral struct {
 	Value string
 }
 
+type BooleanLiteral struct {
+	Value bool
+}
+
 type NumberLiteral struct {
 	Value float64
 }

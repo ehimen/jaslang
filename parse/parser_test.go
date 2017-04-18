@@ -79,13 +79,52 @@ func TestInvalidNumberSyntax(t *testing.T) {
 		testutil.MakeLexeme("1.3.2.2.422", lex.LNumber, 1),
 	})
 
-	if _, err := parser.Parse(); err == nil {
+	if _, err := parser.Parse(); err != parse.InvalidNumber {
 		t.Fatalf("Expected Parse() to fail on invalid number, but got %v", err)
-	} else {
-		if e, isSyntaxError := err.(parse.SyntaxError); !isSyntaxError {
-			t.Fatalf("Expected syntax error, but got %v", e)
-		}
 	}
+}
+
+func TestIncompleteInput(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("true", lex.LBoolTrue, 1),
+	})
+
+	if _, err := parser.Parse(); err != parse.UnterminatedStatement {
+		t.Fatalf("Expected unterminated statement error, but got: %v", err)
+	}
+}
+
+func TestTrueFalse(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("true", lex.LBoolTrue, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 2),
+		testutil.MakeLexeme(" ", lex.LWhitespace, 3),
+		testutil.MakeLexeme("false", lex.LBoolFalse, 4),
+		testutil.MakeLexeme(";", lex.LSemiColon, 5),
+	})
+
+	expected := expectStatements(
+		&parse.Statement{
+			ParentNode: parse.ParentNode{
+				Children: []parse.Node{
+					&parse.BooleanLiteral{
+						Value: true,
+					},
+				},
+			},
+		},
+		&parse.Statement{
+			ParentNode: parse.ParentNode{
+				Children: []parse.Node{
+					&parse.BooleanLiteral{
+						Value: false,
+					},
+				},
+			},
+		},
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
 }
 
 func getParser(lexemes []lex.Lexeme) parse.Parser {
