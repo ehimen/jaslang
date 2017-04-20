@@ -23,13 +23,32 @@ type machine struct {
 	finished bool
 }
 
+type UnacceptableMachineFinishState struct {
+	state string
+}
+
+func (err UnacceptableMachineFinishState) Error() string {
+	return fmt.Sprintf("Unacceptable finish state: %s", err.state)
+}
+
 var MachineUnusable = errors.New("Machine is in an unusable state. Has it already finished?")
 
-type UnacceptableMachineFinishState error
+type UnknownMachineState struct {
+	state string
+}
 
-type UnknownMachineState error
+func (err UnknownMachineState) Error() string {
+	return fmt.Sprintf("Unknown machine state: %s", err.state)
+}
 
-type InvalidMachineTransition error
+type InvalidMachineTransition struct {
+	from string
+	to   string
+}
+
+func (err InvalidMachineTransition) Error() string {
+	return fmt.Sprintf("Don't know how to move from %s to %s", err.from, err.to)
+}
 
 func newMachine() *machine {
 	return &machine{states: make(map[string]*state), finished: false}
@@ -50,7 +69,7 @@ func (machine *machine) Transition(how string) error {
 	}
 
 	if _, exists := machine.current.paths[how]; !exists {
-		return errors.New(fmt.Sprintf("Don't know how to move from %s to %s", machine.current.name, how))
+		return InvalidMachineTransition{machine.current.name, how}
 	}
 
 	machine.current = machine.current.paths[how]
@@ -75,12 +94,12 @@ func (machine *machine) Finish() error {
 		return nil
 	}
 
-	return UnacceptableMachineFinishState(errors.New(fmt.Sprintf("Unacceptable finish state: %s", machine.current.name)))
+	return UnacceptableMachineFinishState{machine.current.name}
 }
 
 func validateState(machine *machine, state string) error {
 	if _, exists := machine.states[state]; !exists {
-		return UnknownMachineState(errors.New(fmt.Sprintf("Unknown machine state: %s", state)))
+		return UnknownMachineState{state}
 	}
 
 	return nil

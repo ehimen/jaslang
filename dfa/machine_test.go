@@ -3,8 +3,9 @@ package dfa_test
 import (
 	"testing"
 
-	"github.com/ehimen/jaslang/dfa"
 	"errors"
+
+	"github.com/ehimen/jaslang/dfa"
 )
 
 func TestAddState(t *testing.T) {
@@ -16,7 +17,7 @@ func TestAddState(t *testing.T) {
 func TestWhenEnteringFailsIfStateNotExists(t *testing.T) {
 	err := getMachineBuilder().WhenEntering("not-exists", func() error { return nil })
 
-	if err == nil {
+	if _, ok := err.(dfa.UnknownMachineState); !ok {
 		t.Error("expected WhenEntering() to fail on non-existent state, but it did not")
 	}
 }
@@ -24,7 +25,7 @@ func TestWhenEnteringFailsIfStateNotExists(t *testing.T) {
 func TestAcceptFailsIfStateNotExists(t *testing.T) {
 	err := getMachineBuilder().Accept("not-exists")
 
-	if err == nil {
+	if _, ok := err.(dfa.UnknownMachineState); !ok {
 		t.Error("expected Accept() to fail on non-existent state, but it did not")
 	}
 }
@@ -53,16 +54,15 @@ func TestFailTwoState(t *testing.T) {
 
 	machine.Transition("two")
 
-	err := machine.Finish()
-	if _, expected := err.(dfa.UnacceptableMachineFinishState); !expected {
-		t.Error("Expected machine to fail, but it accepted")
+	if _, expected := machine.Finish().(dfa.UnacceptableMachineFinishState); !expected {
+		t.Error("Expected machine to fail, but it accepted or returned the wrong error")
 	}
 }
 
 func TestStartFailsIfStateNotExists(t *testing.T) {
 	_, err := getMachineBuilder().Start("not-exists")
 
-	if err == nil {
+	if _, ok := err.(dfa.UnknownMachineState); !ok {
 		t.Error("expected Start() to fail on non-existent state, but it did not")
 	}
 }
@@ -74,7 +74,7 @@ func TestInvalidTransition(t *testing.T) {
 
 	machine := build(builder, "one", t)
 
-	if err := machine.Transition("not-exists"); err == nil {
+	if _, ok := machine.Transition("not-exists").(dfa.InvalidMachineTransition); !ok {
 		t.Error("Expected Transition() to fail on non-existent path")
 	}
 }
@@ -166,19 +166,19 @@ func TestMachineCannotBeUsedAfterCompletion(t *testing.T) {
 		t.Error("Expected second Transition() to fail as machine unusable, but it didn't")
 	}
 
-	if err := machine.Finish(); err == nil {
+	if err := machine.Finish(); err != dfa.MachineUnusable {
 		t.Error("Expected second Finish() to fail as machine unusable, but it didn't")
 	}
 }
 
-func TestWhenFnFailsTransitionFails (t *testing.T) {
+func TestWhenFnFailsTransitionFails(t *testing.T) {
 	builder := getMachineBuilder()
 
 	builder.Path("origin", "origin")
 
 	expected := errors.New("Test error")
 
-	builder.WhenEntering("origin", func () error { return expected })
+	builder.WhenEntering("origin", func() error { return expected })
 
 	machine := build(builder, "origin", t)
 

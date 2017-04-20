@@ -79,8 +79,10 @@ func TestInvalidNumberSyntax(t *testing.T) {
 		testutil.MakeLexeme("1.3.2.2.422", lex.LNumber, 1),
 	})
 
-	if _, err := parser.Parse(); err != parse.InvalidNumber {
-		t.Fatalf("Expected Parse() to fail on invalid number, but got %v", err)
+	_, err := parser.Parse()
+
+	if _, isInvalidNumber := err.(parse.InvalidNumberError); !isInvalidNumber {
+		t.Fatalf("Expected Parse() to fail on invalid number, but got: %s", err)
 	}
 }
 

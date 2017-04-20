@@ -23,14 +23,21 @@ type parser struct {
 	statementStack []Statement
 }
 
-// TODO: Better error reporting including failing lexeme
-// TODO: Problems with type assertions on error types not
-// TODO: working in the way I expected them to.
-// TODO: e.g. "type MyError error" doesn't seem to exclusively
-// TODO: match when running err.(MyError)
-var SyntaxError = errors.New("Syntax error!")
+type UnexpectedTokenError struct {
+	l lex.Lexeme
+}
 
-var InvalidNumber = errors.New("Invalid number!")
+func (err UnexpectedTokenError) Error() string {
+	return fmt.Sprintf("Unexpected token \"%s\" at position %d", err.l.Value, err.l.Start)
+}
+
+type InvalidNumberError struct {
+	UnexpectedTokenError
+}
+
+func (err InvalidNumberError) Error() string {
+	return fmt.Sprintf("Invalid number token \"%s\" at position %d", err.l.Value, err.l.Start)
+}
 
 var UnterminatedStatement = errors.New("Unterminated statement!")
 
@@ -139,7 +146,7 @@ func (p *parser) createNumberLiteral() error {
 	if number, err := strconv.ParseFloat(p.current.Value, 64); err == nil {
 		p.push(&NumberLiteral{Value: number})
 	} else {
-		return InvalidNumber
+		return InvalidNumberError{UnexpectedTokenError{p.current}}
 	}
 
 	return nil
