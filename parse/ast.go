@@ -34,14 +34,34 @@ type FunctionCall struct {
 	ParentNode
 }
 
-type StringLiteral struct {
+type String struct {
 	Value string
 }
 
-type BooleanLiteral struct {
+type Boolean struct {
 	Value bool
 }
 
-type NumberLiteral struct {
+type Number struct {
 	Value float64
+}
+
+func NewStatement(children ...Node) *Statement {
+	return &Statement{ParentNode: ParentNode{Children: children}}
+}
+
+func NewFunctionCall(identifier string, children ...Node) *FunctionCall {
+	return &FunctionCall{Identifier: identifier, ParentNode: ParentNode{Children: children}}
+}
+
+func NewString(value string) *String {
+	return &String{value}
+}
+
+func NewBoolean(value bool) *Boolean {
+	return &Boolean{value}
+}
+
+func NewNumber(value float64) *Number {
+	return &Number{value}
 }

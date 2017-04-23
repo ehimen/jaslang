@@ -20,22 +20,12 @@ func TestSimpleFunctionCall(t *testing.T) {
 	})
 
 	expected := expectStatements(
-		&parse.Statement{
-			ParentNode: parse.ParentNode{
-				Children: []parse.Node{
-					&parse.FunctionCall{
-						Identifier: "print",
-						ParentNode: parse.ParentNode{
-							Children: []parse.Node{
-								&parse.StringLiteral{
-									Value: "Hello, world!",
-								},
-							},
-						},
-					},
-				},
-			},
-		},
+		parse.NewStatement(
+			parse.NewFunctionCall(
+				"print",
+				parse.NewString("Hello, world!"),
+			),
+		),
 	)
 
 	assert.Equal(t, expected, testParse(parser, t))
@@ -51,24 +41,8 @@ func TestTwoLiterals(t *testing.T) {
 	})
 
 	expected := expectStatements(
-		&parse.Statement{
-			ParentNode: parse.ParentNode{
-				Children: []parse.Node{
-					&parse.NumberLiteral{
-						Value: float64(1.34),
-					},
-				},
-			},
-		},
-		&parse.Statement{
-			ParentNode: parse.ParentNode{
-				Children: []parse.Node{
-					&parse.NumberLiteral{
-						Value: float64(3.42),
-					},
-				},
-			},
-		},
+		parse.NewStatement(parse.NewNumber(float64(1.34))),
+		parse.NewStatement(parse.NewNumber(float64(3.42))),
 	)
 
 	assert.Equal(t, expected, testParse(parser, t))
@@ -106,24 +80,8 @@ func TestTrueFalse(t *testing.T) {
 	})
 
 	expected := expectStatements(
-		&parse.Statement{
-			ParentNode: parse.ParentNode{
-				Children: []parse.Node{
-					&parse.BooleanLiteral{
-						Value: true,
-					},
-				},
-			},
-		},
-		&parse.Statement{
-			ParentNode: parse.ParentNode{
-				Children: []parse.Node{
-					&parse.BooleanLiteral{
-						Value: false,
-					},
-				},
-			},
-		},
+		parse.NewStatement(parse.NewBoolean(true)),
+		parse.NewStatement(parse.NewBoolean(false)),
 	)
 
 	assert.Equal(t, expected, testParse(parser, t))

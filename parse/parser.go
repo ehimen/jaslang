@@ -123,28 +123,26 @@ func NewParser(lexer lex.Lexer) Parser {
 }
 
 func (p *parser) createIdentifier() error {
-	p.push(&FunctionCall{Identifier: p.current.Value})
+	p.push(NewFunctionCall(p.current.Value))
 
 	return nil
 }
 
 func (p *parser) createStringLiteral() error {
-	p.push(&StringLiteral{Value: p.current.Value})
+	p.push(NewString(p.current.Value))
 
 	return nil
 }
 
 func (p *parser) createBooleanLiteral() error {
-	value := p.current.Type == lex.LBoolTrue
-
-	p.push(&BooleanLiteral{Value: value})
+	p.push(NewBoolean(p.current.Type == lex.LBoolTrue))
 
 	return nil
 }
 
 func (p *parser) createNumberLiteral() error {
 	if number, err := strconv.ParseFloat(p.current.Value, 64); err == nil {
-		p.push(&NumberLiteral{Value: number})
+		p.push(NewNumber(number))
 	} else {
 		return InvalidNumberError{UnexpectedTokenError{p.current}}
 	}
