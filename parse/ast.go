@@ -4,7 +4,9 @@ type Node interface {
 }
 
 type ContainsChildren interface {
-	Push(child Node)
+	push(child Node)
+	getLastChild() Node
+	removeLastChild()
 }
 
 // Can be embedded in to all node types that
@@ -13,8 +15,24 @@ type ParentNode struct {
 	Children []Node
 }
 
-func (parent *ParentNode) Push(child Node) {
+func (parent *ParentNode) push(child Node) {
 	parent.Children = append(parent.Children, child)
+}
+
+func (parent *ParentNode) getLastChild() Node {
+	if len(parent.Children) > 0 {
+		return parent.Children[len(parent.Children)-1]
+	}
+
+	return nil
+}
+
+func (parent *ParentNode) removeLastChild() {
+	if len(parent.Children) == 0 {
+		return
+	}
+
+	parent.Children = parent.Children[0 : len(parent.Children)-1]
 }
 
 type RootNode struct {
@@ -30,8 +48,12 @@ type Statement struct {
 }
 
 type FunctionCall struct {
-	Identifier string
+	Identifier *Identifier
 	ParentNode
+}
+
+type Identifier struct {
+	Identifier string
 }
 
 type String struct {
@@ -46,12 +68,25 @@ type Number struct {
 	Value float64
 }
 
+type Operator struct {
+	Operator string
+	ParentNode
+}
+
 func NewStatement(children ...Node) *Statement {
 	return &Statement{ParentNode: ParentNode{Children: children}}
 }
 
 func NewFunctionCall(identifier string, children ...Node) *FunctionCall {
-	return &FunctionCall{Identifier: identifier, ParentNode: ParentNode{Children: children}}
+	return &FunctionCall{Identifier: NewIdentifier(identifier), ParentNode: ParentNode{Children: children}}
+}
+
+func NewIdentifier(identifier string) *Identifier {
+	return &Identifier{Identifier: identifier}
+}
+
+func NewOperator(operator string, children ...Node) *Operator {
+	return &Operator{Operator: operator, ParentNode: ParentNode{Children: children}}
 }
 
 func NewString(value string) *String {

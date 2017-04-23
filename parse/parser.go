@@ -19,6 +19,7 @@ type parser struct {
 	lexer          lex.Lexer
 	dfa            dfa.Machine
 	current        lex.Lexeme
+	next           lex.Lexeme
 	nodeStack      []Node
 	statementStack []Statement
 }
@@ -46,22 +47,38 @@ func (p *parser) Parse() (RootNode, error) {
 
 	p.nodeStack = []Node{root}
 
-	for {
-		lexeme, err := p.lexer.GetNext()
+	if next, eof, err := p.consume(); eof != nil {
+		return *root, nil
+	} else if err != nil {
+		return *root, err
+	} else {
+		p.current = next
+	}
 
-		if err != nil {
+	if next, eof, err := p.consume(); err != nil {
+		return *root, err
+	} else if eof == nil {
+		p.next = next
+	}
+
+	for {
+		if p.current.IsEmpty() {
 			break
 		}
 
 		// We don't care about whitespace
-		if lexeme.Type == lex.LWhitespace {
-			continue
+		if p.current.Type != lex.LWhitespace {
+			if err := p.dfa.Transition(string(p.current.Type)); err != nil {
+				return *root, err
+			}
 		}
 
-		p.current = lexeme
+		p.current = p.next
 
-		if err := p.dfa.Transition(string(lexeme.Type)); err != nil {
+		if next, _, err := p.consume(); err != nil {
 			return *root, err
+		} else {
+			p.next = next
 		}
 	}
 
@@ -70,6 +87,18 @@ func (p *parser) Parse() (RootNode, error) {
 	}
 
 	return *root, nil
+}
+
+func (p *parser) consume() (next lex.Lexeme, eof error, lexErr error) {
+	if lexeme, err := p.lexer.GetNext(); err == nil {
+		next = lexeme
+	} else if err == lex.EndOfInput {
+		eof = err
+	} else {
+		lexErr = err
+	}
+
+	return
 }
 
 func NewParser(lexer lex.Lexer) Parser {
@@ -86,16 +115,18 @@ func NewParser(lexer lex.Lexer) Parser {
 	number := string(lex.LNumber)
 	true := string(lex.LBoolTrue)
 	false := string(lex.LBoolFalse)
+	operator := string(lex.LOperator)
 
 	literals := []string{number, quoted, true, false}
 
 	builder.Paths([]string{start}, append(literals, identifier))
-	builder.Path(identifier, parenOpen)
+	builder.Paths([]string{identifier}, []string{parenOpen, operator, term})
 	builder.Path(parenOpen, quoted)
 	builder.Path(quoted, parenClose)
 	builder.Path(parenClose, term)
 	builder.Paths(literals, []string{term})
 	builder.Paths([]string{term}, literals)
+	builder.Path(operator, identifier)
 
 	builder.WhenEntering(identifier, parser.createIdentifier)
 	builder.WhenEntering(quoted, parser.createStringLiteral)
@@ -104,6 +135,7 @@ func NewParser(lexer lex.Lexer) Parser {
 	builder.WhenEntering(number, parser.createNumberLiteral)
 	builder.WhenEntering(true, parser.createBooleanLiteral)
 	builder.WhenEntering(false, parser.createBooleanLiteral)
+	builder.WhenEntering(operator, parser.createOperator)
 
 	builder.Accept(term)
 
@@ -119,7 +151,11 @@ func NewParser(lexer lex.Lexer) Parser {
 }
 
 func (p *parser) createIdentifier() error {
-	p.push(NewFunctionCall(p.current.Value))
+	if p.next.Type == lex.LParenOpen {
+		p.push(NewFunctionCall(p.current.Value))
+	} else {
+		p.push(NewIdentifier(p.current.Value))
+	}
 
 	return nil
 }
@@ -146,6 +182,12 @@ func (p *parser) createNumberLiteral() error {
 	return nil
 }
 
+func (p *parser) createOperator() error {
+	p.push(NewOperator(p.current.Value))
+
+	return nil
+}
+
 func (p *parser) closeNode() error {
 	p.nodeStack = p.nodeStack[0 : len(p.nodeStack)-1]
 
@@ -165,12 +207,36 @@ func (p *parser) push(node Node) {
 	context = getContext(p)
 
 	if parent, isParent := context.(ContainsChildren); isParent {
-		parent.Push(node)
+		lastChild := parent.getLastChild()
+
+		if priority := takesPrecedence(node, lastChild); priority != nil {
+			parent.removeLastChild()
+			priority.push(lastChild)
+		}
+
+		parent.push(node)
 	}
 
 	if parent, isParent := node.(ContainsChildren); isParent {
 		p.nodeStack = append(p.nodeStack, parent)
 	}
+}
+
+// Returns what if over is what is a parent and over
+// is not.
+// TODO: Might want to introduce operator priorities.
+func takesPrecedence(what Node, over Node) ContainsChildren {
+	if over == nil {
+		return nil
+	}
+
+	_, overIsParent := over.(ContainsChildren)
+
+	if what, whatIsParent := what.(ContainsChildren); whatIsParent && !overIsParent {
+		return what
+	}
+
+	return nil
 }
 
 func getContext(p *parser) Node {

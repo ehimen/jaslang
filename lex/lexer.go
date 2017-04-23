@@ -45,6 +45,10 @@ func (l Lexeme) String() string {
 	return fmt.Sprintf("\"%s\" (%s) at position %d", l.Value, l.Type, l.Start)
 }
 
+func (l Lexeme) IsEmpty() bool {
+	return l == Lexeme{}
+}
+
 type Lexer interface {
 	GetNext() (Lexeme, error)
 }
