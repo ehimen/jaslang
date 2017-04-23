@@ -108,6 +108,33 @@ func TestOperator(t *testing.T) {
 	assert.Equal(t, expected, testParse(parser, t))
 }
 
+func TestMultipleOperator(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("a", lex.LIdentifier, 1),
+		testutil.MakeLexeme("+", lex.LOperator, 2),
+		testutil.MakeLexeme("b", lex.LIdentifier, 3),
+		testutil.MakeLexeme("+", lex.LOperator, 4),
+		testutil.MakeLexeme("c", lex.LIdentifier, 5),
+		testutil.MakeLexeme(";", lex.LSemiColon, 6),
+	})
+
+	expected := expectStatements(
+		parse.NewStatement(
+			parse.NewOperator(
+				"+",
+				parse.NewIdentifier("a"),
+				parse.NewOperator(
+					"+",
+					parse.NewIdentifier("b"),
+					parse.NewIdentifier("c"),
+				),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
+}
+
 func getParser(lexemes []lex.Lexeme) parse.Parser {
 	return parse.NewParser(testutil.NewSimpleLexer(lexemes))
 }
