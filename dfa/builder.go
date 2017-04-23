@@ -5,6 +5,7 @@ type MachineBuilder interface {
 	WhenEntering(string, func() error) error
 	Accept(string) error
 	Start(string) (Machine, error)
+	Paths([]string, []string)
 }
 
 type machineBuilder struct {
@@ -25,6 +26,14 @@ func (builder *machineBuilder) Path(from string, to string) {
 	}
 
 	builder.machine.states[from].paths[to] = builder.machine.states[to]
+}
+
+func (builder *machineBuilder) Paths(from []string, to []string) {
+	for _, f := range from {
+		for _, t := range to {
+			builder.Path(f, t)
+		}
+	}
 }
 
 func (builder *machineBuilder) Accept(what string) error {

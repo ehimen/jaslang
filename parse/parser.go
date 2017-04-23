@@ -87,19 +87,15 @@ func NewParser(lexer lex.Lexer) Parser {
 	true := string(lex.LBoolTrue)
 	false := string(lex.LBoolFalse)
 
-	// TODO: would be good to group lots of common elements here (e.g. literals)
-	builder.Path(start, number)
-	builder.Path(start, true)
-	builder.Path(start, identifier)
+	literals := []string{number, quoted, true, false}
+
+	builder.Paths([]string{start}, append(literals, identifier))
 	builder.Path(identifier, parenOpen)
 	builder.Path(parenOpen, quoted)
 	builder.Path(quoted, parenClose)
 	builder.Path(parenClose, term)
-	builder.Path(number, term)
-	builder.Path(term, number)
-	builder.Path(term, false)
-	builder.Path(true, term)
-	builder.Path(false, term)
+	builder.Paths(literals, []string{term})
+	builder.Paths([]string{term}, literals)
 
 	builder.WhenEntering(identifier, parser.createIdentifier)
 	builder.WhenEntering(quoted, parser.createStringLiteral)

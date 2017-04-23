@@ -187,6 +187,23 @@ func TestWhenFnFailsTransitionFails(t *testing.T) {
 	}
 }
 
+func TestPaths(t *testing.T) {
+	builder := getMachineBuilder()
+
+	builder.Paths([]string{"one", "two"}, []string{"one", "two"})
+	builder.Accept("two")
+
+	machine := build(builder, "one", t)
+
+	machine.Transition("two")
+	machine.Transition("one")
+	machine.Transition("two")
+
+	if err := machine.Finish(); err != nil {
+		t.Errorf("Expected multiple paths to succeed, but it didn't: %v", err)
+	}
+}
+
 func build(builder dfa.MachineBuilder, start string, t *testing.T) dfa.Machine {
 	machine, err := builder.Start(start)
 
