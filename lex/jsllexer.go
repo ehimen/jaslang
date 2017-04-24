@@ -149,7 +149,7 @@ func isIdentifierCharacter(str string) bool {
 }
 
 func isSpecialSymbol(str string) bool {
-	return strings.IndexAny(str, "{}();") == 0
+	return strings.IndexAny(str, SpecialCharacters) == 0
 }
 
 func isOperatorCharacter(str string) bool {
@@ -231,6 +231,8 @@ func characterState(l *jslLexer) (stateFunction, error) {
 		l.emit(LParenClose)
 	case ";":
 		l.emit(LSemiColon)
+	case ":":
+		l.emit(LColon)
 	}
 
 	return defaultState, nil

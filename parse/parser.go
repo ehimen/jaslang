@@ -116,17 +116,19 @@ func NewParser(lexer lex.Lexer) Parser {
 	true := string(lex.LBoolTrue)
 	false := string(lex.LBoolFalse)
 	operator := string(lex.LOperator)
+	let := string(lex.LLet)
 
 	literals := []string{number, quoted, true, false}
 
-	builder.Paths([]string{start}, append(literals, identifier))
+	builder.Paths([]string{start}, append(literals, identifier, let))
 	builder.Paths([]string{identifier}, []string{parenOpen, operator, term})
 	builder.Path(parenOpen, quoted)
 	builder.Path(quoted, parenClose)
 	builder.Path(parenClose, term)
-	builder.Paths(literals, []string{term})
+	builder.Paths(literals, []string{term, operator})
 	builder.Paths([]string{term}, literals)
-	builder.Path(operator, identifier)
+	builder.Paths([]string{operator}, append(literals, identifier))
+	builder.Path(let, identifier)
 
 	builder.WhenEntering(identifier, parser.createIdentifier)
 	builder.WhenEntering(quoted, parser.createStringLiteral)
@@ -136,6 +138,7 @@ func NewParser(lexer lex.Lexer) Parser {
 	builder.WhenEntering(true, parser.createBooleanLiteral)
 	builder.WhenEntering(false, parser.createBooleanLiteral)
 	builder.WhenEntering(operator, parser.createOperator)
+	builder.WhenEntering(let, parser.createLet)
 
 	builder.Accept(term)
 
@@ -188,6 +191,12 @@ func (p *parser) createOperator() error {
 	return nil
 }
 
+func (p *parser) createLet() error {
+	p.push(&Let{})
+
+	return nil
+}
+
 func (p *parser) closeNode() error {
 	p.nodeStack = p.nodeStack[0 : len(p.nodeStack)-1]
 
@@ -207,11 +216,14 @@ func (p *parser) push(node Node) {
 	context = getContext(p)
 
 	if parent, isParent := context.(ContainsChildren); isParent {
-		lastChild := parent.getLastChild()
 
-		if priority := takesPrecedence(node, lastChild); priority != nil {
-			parent.removeLastChild()
-			priority.push(lastChild)
+		if adjustable, isAdjustable := parent.(Adjustable); isAdjustable {
+			lastChild := adjustable.getLastChild()
+
+			if priority := takesPrecedence(node, lastChild); priority != nil {
+				adjustable.removeLastChild()
+				priority.push(lastChild)
+			}
 		}
 
 		parent.push(node)

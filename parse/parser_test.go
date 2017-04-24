@@ -135,6 +135,44 @@ func TestMultipleOperator(t *testing.T) {
 	assert.Equal(t, expected, testParse(parser, t))
 }
 
+func TestOperatorPrecedence(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+		testutil.MakeLexeme(":", lex.LOperator, 3),
+		testutil.MakeLexeme("number", lex.LIdentifier, 4),
+		testutil.MakeLexeme("=", lex.LOperator, 5),
+		testutil.MakeLexeme("1", lex.LNumber, 6),
+		testutil.MakeLexeme("+", lex.LOperator, 7),
+		testutil.MakeLexeme("2", lex.LNumber, 8),
+		testutil.MakeLexeme("-", lex.LOperator, 9),
+		testutil.MakeLexeme("3", lex.LNumber, 10),
+		testutil.MakeLexeme(";", lex.LSemiColon, 11),
+	})
+
+	expected := expectStatements(
+		parse.NewStatement(
+			&parse.Let{
+				Identifier: parse.NewIdentifier("foo"),
+				Type:       parse.NewIdentifier("number"),
+				Children: []parse.Node{
+					parse.NewOperator(
+						"-",
+						parse.NewOperator(
+							"+",
+							parse.NewNumber(1),
+							parse.NewNumber(2),
+						),
+						parse.NewNumber(3),
+					),
+				},
+			},
+		),
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
+}
+
 func getParser(lexemes []lex.Lexeme) parse.Parser {
 	return parse.NewParser(testutil.NewSimpleLexer(lexemes))
 }
