@@ -231,8 +231,6 @@ func characterState(l *jslLexer) (stateFunction, error) {
 		l.emit(LParenClose)
 	case ";":
 		l.emit(LSemiColon)
-	case ":":
-		l.emit(LColon)
 	}
 
 	return defaultState, nil
@@ -315,18 +313,26 @@ func identifierState(l *jslLexer) (stateFunction, error) {
 }
 
 func operatorState(l *jslLexer) (stateFunction, error) {
+	emit := func() {
+		if l.current == LEquals.String() {
+			l.emit(LEquals)
+		} else {
+			l.emit(LOperator)
+		}
+	}
+
 	for l.has() {
 		next := l.peek()
 
 		if !isOperatorCharacter(next) {
-			l.emit(LOperator)
+			emit()
 			return defaultState, nil
 		}
 
 		l.next()
 	}
 
-	l.emit(LOperator)
+	emit()
 
 	return nil, EndOfInput
 }

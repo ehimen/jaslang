@@ -1,12 +1,14 @@
 package parse
 
-import "errors"
+import (
+	"errors"
+)
 
 type Node interface {
 }
 
 type ContainsChildren interface {
-	push(child Node) (bool, error)
+	push(child Node) (error, bool)
 }
 
 type Adjustable interface {
@@ -89,19 +91,19 @@ type Let struct {
 
 func (let *Let) push(child Node) (error, bool) {
 	if let.Identifier == nil {
-		if ident, isIdentifier := child.(Identifier); !isIdentifier {
+		if ident, isIdentifier := child.(*Identifier); !isIdentifier {
 			return errors.New("Let requires an identifier"), false // TODO: test this
 		} else {
-			let.Identifier = &ident
+			let.Identifier = ident
 			return nil, true
 		}
 	}
 
 	if let.Type == nil {
-		if ident, isIdentifier := child.(Identifier); !isIdentifier {
+		if ident, isIdentifier := child.(*Identifier); !isIdentifier {
 			return errors.New("Let requires a type identifier"), false // TODO: test this
 		} else {
-			let.Type = &ident
+			let.Type = ident
 			return nil, true
 		}
 	}
@@ -109,6 +111,26 @@ func (let *Let) push(child Node) (error, bool) {
 	let.Children = append(let.Children, child)
 
 	return nil, true
+}
+
+// getLastChild() Node
+// removeLastChild()
+
+func (let *Let) getLastChild() Node {
+	if len(let.Children) > 0 {
+		return let.Children[len(let.Children)-1]
+	}
+
+	// Deliberately don't return type or identifier; these
+	// can't be adjusted.
+
+	return nil
+}
+
+func (let *Let) removeLastChild() {
+	if len(let.Children) > 0 {
+		let.Children = let.Children[0 : len(let.Children)-1]
+	}
 }
 
 func NewStatement(children ...Node) *Statement {

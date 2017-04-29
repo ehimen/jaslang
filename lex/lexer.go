@@ -11,6 +11,10 @@ func (ltype LexemeType) is(str string) bool {
 	return str == string(ltype)
 }
 
+func (ltype LexemeType) String() string {
+	return string(ltype)
+}
+
 const (
 	LQuoted     LexemeType = "quoted"
 	LIdentifier LexemeType = "identifier"
@@ -29,10 +33,10 @@ const (
 	LLet        LexemeType = "let"
 	LBoolTrue   LexemeType = "true"
 	LBoolFalse  LexemeType = "false"
-	LColon      LexemeType = ":"
+	LEquals     LexemeType = "="
 
 	OperatorSymbols   string = "+-.^*&/|=>!"
-	SpecialCharacters string = "{}();:"
+	SpecialCharacters string = "{}();"
 )
 
 var Keywords = []LexemeType{LIf, LElse, LElseIf, LLet, LWhile}

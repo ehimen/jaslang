@@ -135,19 +135,18 @@ func TestMultipleOperator(t *testing.T) {
 	assert.Equal(t, expected, testParse(parser, t))
 }
 
-func TestOperatorPrecedence(t *testing.T) {
+func TestLetWithExpression(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
 		testutil.MakeLexeme("let", lex.LLet, 1),
 		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
-		testutil.MakeLexeme(":", lex.LOperator, 3),
-		testutil.MakeLexeme("number", lex.LIdentifier, 4),
-		testutil.MakeLexeme("=", lex.LOperator, 5),
-		testutil.MakeLexeme("1", lex.LNumber, 6),
-		testutil.MakeLexeme("+", lex.LOperator, 7),
-		testutil.MakeLexeme("2", lex.LNumber, 8),
-		testutil.MakeLexeme("-", lex.LOperator, 9),
-		testutil.MakeLexeme("3", lex.LNumber, 10),
-		testutil.MakeLexeme(";", lex.LSemiColon, 11),
+		testutil.MakeLexeme("number", lex.LIdentifier, 3),
+		testutil.MakeLexeme("=", lex.LEquals, 4),
+		testutil.MakeLexeme("1", lex.LNumber, 5),
+		testutil.MakeLexeme("+", lex.LOperator, 6),
+		testutil.MakeLexeme("2", lex.LNumber, 7),
+		testutil.MakeLexeme("-", lex.LOperator, 8),
+		testutil.MakeLexeme("3", lex.LNumber, 9),
+		testutil.MakeLexeme(";", lex.LSemiColon, 10),
 	})
 
 	expected := expectStatements(
@@ -157,13 +156,13 @@ func TestOperatorPrecedence(t *testing.T) {
 				Type:       parse.NewIdentifier("number"),
 				Children: []parse.Node{
 					parse.NewOperator(
-						"-",
+						"+",
+						parse.NewNumber(1),
 						parse.NewOperator(
-							"+",
-							parse.NewNumber(1),
+							"-",
 							parse.NewNumber(2),
+							parse.NewNumber(3),
 						),
-						parse.NewNumber(3),
 					),
 				},
 			},

@@ -11,7 +11,7 @@ import (
 func TestAddState(t *testing.T) {
 	machine := getMachineBuilder()
 
-	machine.Path("from", "to")
+	machine.Path("from", "only", "to")
 }
 
 func TestWhenEnteringFailsIfStateNotExists(t *testing.T) {
@@ -33,12 +33,12 @@ func TestAcceptFailsIfStateNotExists(t *testing.T) {
 func TestAcceptTwoState(t *testing.T) {
 	builder := getMachineBuilder()
 
-	builder.Path("one", "two")
+	builder.Path("one", "only", "two")
 	builder.Accept("two")
 
 	machine := build(builder, "one", t)
 
-	machine.Transition("two")
+	machine.Transition("only")
 
 	if err := machine.Finish(); err != nil {
 		t.Errorf("Expected machine acceptance, but it failed: %v", err)
@@ -48,11 +48,11 @@ func TestAcceptTwoState(t *testing.T) {
 func TestFailTwoState(t *testing.T) {
 	builder := getMachineBuilder()
 
-	builder.Path("one", "two")
+	builder.Path("one", "only", "two")
 
 	machine := build(builder, "one", t)
 
-	machine.Transition("two")
+	machine.Transition("only")
 
 	if _, expected := machine.Finish().(dfa.UnacceptableMachineFinishState); !expected {
 		t.Error("Expected machine to fail, but it accepted or returned the wrong error")
@@ -70,7 +70,7 @@ func TestStartFailsIfStateNotExists(t *testing.T) {
 func TestInvalidTransition(t *testing.T) {
 	builder := getMachineBuilder()
 
-	builder.Path("one", "two")
+	builder.Path("one", "only", "two")
 
 	machine := build(builder, "one", t)
 
@@ -89,14 +89,14 @@ func TestWhenEnteringIsCalled(t *testing.T) {
 	}
 
 	builder := getMachineBuilder()
-	builder.Path("from", "to")
+	builder.Path("from", "only", "to")
 	builder.WhenEntering("to", inc)
 	builder.WhenEntering("to", inc)
 	builder.WhenEntering("to", inc)
 
 	machine := build(builder, "from", t)
 
-	machine.Transition("to")
+	machine.Transition("only")
 
 	if n != 3 {
 		t.Errorf("Expected WhenEntering() to invoke functions, but it didn't. n: %d", n)
@@ -116,12 +116,12 @@ func TestMachineTrace(t *testing.T) {
 
 	builder := getMachineBuilder()
 
-	builder.Path("one", "two")
-	builder.Path("two", "three")
-	builder.Path("three", "five")
-	builder.Path("four", "five")
-	builder.Path("five", "four")
-	builder.Path("five", "one")
+	builder.Path("one", "one-two", "two")
+	builder.Path("two", "two-three", "three")
+	builder.Path("three", "three-five", "five")
+	builder.Path("four", "four-five", "five")
+	builder.Path("five", "five-four", "four")
+	builder.Path("five", "five-one", "one")
 	builder.WhenEntering("one", getTraceFn("one"))
 	builder.WhenEntering("two", getTraceFn("two"))
 	builder.WhenEntering("three", getTraceFn("three"))
@@ -133,12 +133,12 @@ func TestMachineTrace(t *testing.T) {
 
 	machine := build(builder, "one", t)
 
-	machine.Transition("two")
-	machine.Transition("three")
-	machine.Transition("five")
-	machine.Transition("four")
-	machine.Transition("five")
-	machine.Transition("one")
+	machine.Transition("one-two")
+	machine.Transition("two-three")
+	machine.Transition("three-five")
+	machine.Transition("five-four")
+	machine.Transition("four-five")
+	machine.Transition("five-one")
 
 	if err := machine.Finish(); err != nil {
 		t.Errorf("Expected machine to accept, but it didn't: %v", err)
@@ -152,7 +152,7 @@ func TestMachineTrace(t *testing.T) {
 func TestMachineCannotBeUsedAfterCompletion(t *testing.T) {
 	builder := getMachineBuilder()
 
-	builder.Path("origin", "origin")
+	builder.Path("origin", "only", "origin")
 
 	builder.Accept("origin")
 
@@ -162,7 +162,7 @@ func TestMachineCannotBeUsedAfterCompletion(t *testing.T) {
 		t.Errorf("Expected machine to accept, but it didn't: %v", err)
 	}
 
-	if err := machine.Transition("origin"); err == nil {
+	if err := machine.Transition("only"); err == nil {
 		t.Error("Expected second Transition() to fail as machine unusable, but it didn't")
 	}
 
@@ -174,7 +174,7 @@ func TestMachineCannotBeUsedAfterCompletion(t *testing.T) {
 func TestWhenFnFailsTransitionFails(t *testing.T) {
 	builder := getMachineBuilder()
 
-	builder.Path("origin", "origin")
+	builder.Path("origin", "only", "origin")
 
 	expected := errors.New("Test error")
 
@@ -182,7 +182,7 @@ func TestWhenFnFailsTransitionFails(t *testing.T) {
 
 	machine := build(builder, "origin", t)
 
-	if actual := machine.Transition("origin"); actual != expected {
+	if actual := machine.Transition("only"); actual != expected {
 		t.Errorf("Expected Transition() to return same err as callback, but got %v", actual)
 	}
 }
@@ -190,14 +190,14 @@ func TestWhenFnFailsTransitionFails(t *testing.T) {
 func TestPaths(t *testing.T) {
 	builder := getMachineBuilder()
 
-	builder.Paths([]string{"one", "two"}, []string{"one", "two"})
+	builder.Paths([]string{"one", "two"}, "transition", []string{"one", "two"})
 	builder.Accept("two")
 
 	machine := build(builder, "one", t)
 
-	machine.Transition("two")
-	machine.Transition("one")
-	machine.Transition("two")
+	machine.Transition("transition")
+	machine.Transition("transition")
+	machine.Transition("transition")
 
 	if err := machine.Finish(); err != nil {
 		t.Errorf("Expected multiple paths to succeed, but it didn't: %v", err)

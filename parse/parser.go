@@ -42,6 +42,20 @@ func (err InvalidNumberError) Error() string {
 
 var UnterminatedStatement = errors.New("Unterminated statement!")
 
+func NewParser(lexer lex.Lexer) Parser {
+	parser := parser{lexer: lexer}
+
+	machine, err := buildDfa(&parser)
+
+	if err != nil {
+		panic(fmt.Sprintf("Cannot build parse machine: %v", err))
+	}
+
+	parser.dfa = machine
+
+	return &parser
+}
+
 func (p *parser) Parse() (RootNode, error) {
 	root := &RootNode{}
 
@@ -68,7 +82,7 @@ func (p *parser) Parse() (RootNode, error) {
 
 		// We don't care about whitespace
 		if p.current.Type != lex.LWhitespace {
-			if err := p.dfa.Transition(string(p.current.Type)); err != nil {
+			if err := p.dfa.Transition(p.current.Type.String()); err != nil {
 				return *root, err
 			}
 		}
@@ -101,78 +115,20 @@ func (p *parser) consume() (next lex.Lexeme, eof error, lexErr error) {
 	return
 }
 
-func NewParser(lexer lex.Lexer) Parser {
-	parser := parser{lexer: lexer}
-
-	builder := dfa.NewMachineBuilder()
-
-	start := "start"
-	identifier := string(lex.LIdentifier)
-	parenOpen := string(lex.LParenOpen)
-	parenClose := string(lex.LParenClose)
-	quoted := string(lex.LQuoted)
-	term := string(lex.LSemiColon)
-	number := string(lex.LNumber)
-	true := string(lex.LBoolTrue)
-	false := string(lex.LBoolFalse)
-	operator := string(lex.LOperator)
-	let := string(lex.LLet)
-
-	literals := []string{number, quoted, true, false}
-
-	builder.Paths([]string{start}, append(literals, identifier, let))
-	builder.Paths([]string{identifier}, []string{parenOpen, operator, term})
-	builder.Path(parenOpen, quoted)
-	builder.Path(quoted, parenClose)
-	builder.Path(parenClose, term)
-	builder.Paths(literals, []string{term, operator})
-	builder.Paths([]string{term}, literals)
-	builder.Paths([]string{operator}, append(literals, identifier))
-	builder.Path(let, identifier)
-
-	builder.WhenEntering(identifier, parser.createIdentifier)
-	builder.WhenEntering(quoted, parser.createStringLiteral)
-	builder.WhenEntering(parenClose, parser.closeNode)
-	builder.WhenEntering(term, parser.closeNode)
-	builder.WhenEntering(number, parser.createNumberLiteral)
-	builder.WhenEntering(true, parser.createBooleanLiteral)
-	builder.WhenEntering(false, parser.createBooleanLiteral)
-	builder.WhenEntering(operator, parser.createOperator)
-	builder.WhenEntering(let, parser.createLet)
-
-	builder.Accept(term)
-
-	machine, err := builder.Start(start)
-
-	if err != nil {
-		panic(fmt.Sprintf("Cannot build parse machine: %v", err))
-	}
-
-	parser.dfa = machine
-
-	return &parser
-}
-
 func (p *parser) createIdentifier() error {
 	if p.next.Type == lex.LParenOpen {
-		p.push(NewFunctionCall(p.current.Value))
+		return p.push(NewFunctionCall(p.current.Value))
 	} else {
-		p.push(NewIdentifier(p.current.Value))
+		return p.push(NewIdentifier(p.current.Value))
 	}
-
-	return nil
 }
 
 func (p *parser) createStringLiteral() error {
-	p.push(NewString(p.current.Value))
-
-	return nil
+	return p.push(NewString(p.current.Value))
 }
 
 func (p *parser) createBooleanLiteral() error {
-	p.push(NewBoolean(p.current.Type == lex.LBoolTrue))
-
-	return nil
+	return p.push(NewBoolean(p.current.Type == lex.LBoolTrue))
 }
 
 func (p *parser) createNumberLiteral() error {
@@ -186,15 +142,11 @@ func (p *parser) createNumberLiteral() error {
 }
 
 func (p *parser) createOperator() error {
-	p.push(NewOperator(p.current.Value))
-
-	return nil
+	return p.push(NewOperator(p.current.Value))
 }
 
 func (p *parser) createLet() error {
-	p.push(&Let{})
-
-	return nil
+	return p.push(&Let{})
 }
 
 func (p *parser) closeNode() error {
@@ -203,7 +155,7 @@ func (p *parser) closeNode() error {
 	return nil
 }
 
-func (p *parser) push(node Node) {
+func (p *parser) push(node Node) error {
 	context := getContext(p)
 
 	// Insert a statement if we need to.
@@ -222,16 +174,23 @@ func (p *parser) push(node Node) {
 
 			if priority := takesPrecedence(node, lastChild); priority != nil {
 				adjustable.removeLastChild()
-				priority.push(lastChild)
+				if err, _ := priority.push(lastChild); err != nil {
+					return err
+				}
 			}
 		}
 
-		parent.push(node)
+		if err, _ := parent.push(node); err != nil {
+			return err
+		}
+
 	}
 
 	if parent, isParent := node.(ContainsChildren); isParent {
 		p.nodeStack = append(p.nodeStack, parent)
 	}
+
+	return nil
 }
 
 // Returns what if over is what is a parent and over
