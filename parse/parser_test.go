@@ -172,6 +172,39 @@ func TestLetWithExpression(t *testing.T) {
 	assert.Equal(t, expected, testParse(parser, t))
 }
 
+func TestOperatorPrecedence(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("1", lex.LNumber, 1),
+		testutil.MakeLexeme("*", lex.LOperator, 2),
+		testutil.MakeLexeme("2", lex.LNumber, 3),
+		testutil.MakeLexeme("+", lex.LOperator, 4),
+		testutil.MakeLexeme("3", lex.LNumber, 5),
+		testutil.MakeLexeme(";", lex.LSemiColon, 6),
+	})
+
+	expected := expectStatements(
+		parse.NewStatement(
+			&parse.Let{
+				Identifier: parse.NewIdentifier("foo"),
+				Type:       parse.NewIdentifier("number"),
+				Children: []parse.Node{
+					parse.NewOperator(
+						"+",
+						parse.NewOperator(
+							"*",
+							parse.NewNumber(1),
+							parse.NewNumber(2),
+						),
+						parse.NewNumber(3),
+					),
+				},
+			},
+		),
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
+}
+
 func TestInvalidLetAssigned(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
 		testutil.MakeLexeme("let", lex.LLet, 1),

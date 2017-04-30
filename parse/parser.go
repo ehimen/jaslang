@@ -9,6 +9,7 @@ import (
 
 	"github.com/ehimen/jaslang/dfa"
 	"github.com/ehimen/jaslang/lex"
+	"github.com/ehimen/jaslang/operations"
 )
 
 type Parser interface {
@@ -22,6 +23,7 @@ type parser struct {
 	next           lex.Lexeme
 	nodeStack      []Node
 	statementStack []Statement
+	operators      *operations.Register
 }
 
 type UnexpectedTokenError struct {
@@ -43,7 +45,10 @@ func (err InvalidNumberError) Error() string {
 var UnterminatedStatement = errors.New("Unterminated statement!")
 
 func NewParser(lexer lex.Lexer) Parser {
-	parser := parser{lexer: lexer}
+	parser := parser{lexer: lexer, operators: operations.NewRegister()}
+
+	parser.operators.Register(operations.Sum{})
+	parser.operators.Register(operations.Multiply{})
 
 	machine, err := buildDfa(&parser)
 
@@ -176,7 +181,7 @@ func (p *parser) push(node Node) error {
 		if adjustable, isAdjustable := parent.(Adjustable); isAdjustable {
 			lastChild := adjustable.getLastChild()
 
-			if priority := takesPrecedence(node, lastChild); priority != nil {
+			if priority := p.takesPrecedence(node, lastChild); priority != nil {
 				adjustable.removeLastChild()
 				if err, _ := priority.push(lastChild); err != nil {
 					return err
@@ -198,9 +203,10 @@ func (p *parser) push(node Node) error {
 }
 
 // Returns what if over is what is a parent and over
-// is not.
-// TODO: Might want to introduce operator priorities.
-func takesPrecedence(what Node, over Node) ContainsChildren {
+// is not. If both over and what are operators, will
+// return what if it has a higher precedence according
+// to our operator register.
+func (p parser) takesPrecedence(what Node, over Node) ContainsChildren {
 	if over == nil {
 		return nil
 	}
@@ -208,6 +214,21 @@ func takesPrecedence(what Node, over Node) ContainsChildren {
 	_, overIsParent := over.(ContainsChildren)
 
 	if what, whatIsParent := what.(ContainsChildren); whatIsParent && !overIsParent {
+
+		// Check operator precedence.
+		overOperator, overIsOperator := over.(*Operator)
+		whatOperator, whatIsOperator := what.(*Operator)
+
+		if whatIsOperator && overIsOperator {
+			takesPrecedence, err := p.operators.TakesPrecedence(whatOperator.Operator, overOperator.Operator)
+			// TODO: error checking
+			if takesPrecedence && err == nil {
+				return what
+			} else {
+				return nil
+			}
+		}
+
 		return what
 	}
 

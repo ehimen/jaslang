@@ -87,11 +87,3 @@ func TestPrecedenceThrowsWhenInvalidOperator(t *testing.T) {
 		t.Errorf("Expected unknown operator error, but got: %v", err)
 	}
 }
-
-func TestRegisterResolveFunction(t *testing.T) {
-	register := operations.NewRegister()
-
-	register.Register(operations.Sum{})
-
-	register.ResolveFunction()
-}

@@ -29,6 +29,8 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.Path(start, identifier, identifier)
 	builder.Path(start, let, let)
 
+	buildExpr(p, builder, "", start, term, term)
+
 	builder.Path(identifier, parenOpen, parenOpen)
 	builder.Path(identifier, operator, operator)
 	builder.Path(identifier, term, term)
@@ -50,12 +52,6 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.Path(term, quoted, quoted)
 	builder.Path(term, ltrue, ltrue)
 	builder.Path(term, lfalse, lfalse)
-
-	builder.Path(operator, number, number)
-	builder.Path(operator, quoted, quoted)
-	builder.Path(operator, ltrue, ltrue)
-	builder.Path(operator, lfalse, lfalse)
-	builder.Path(operator, identifier, identifier)
 
 	builder.Path(let, identifier, "let-identifier")
 	builder.Path("let-identifier", identifier, "let-type-identifier")
@@ -86,8 +82,14 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 // operator. These nodes are in the let-specific section of the
 // the DFA.
 func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, returnVia string, returnTo string) {
-	exprNumber := prefix + "-expr-" + lex.LNumber.String()
-	exprOperator := prefix + "-expr-" + lex.LOperator.String()
+	if len(prefix) > 0 {
+		prefix = prefix + "-expr-"
+	} else {
+		prefix = "expr-"
+	}
+
+	exprNumber := prefix + lex.LNumber.String()
+	exprOperator := prefix + lex.LOperator.String()
 
 	b.Path(from, number, exprNumber)
 	b.Path(exprNumber, operator, exprOperator)
