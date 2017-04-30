@@ -25,11 +25,11 @@ type parser struct {
 }
 
 type UnexpectedTokenError struct {
-	l lex.Lexeme
+	Lexeme lex.Lexeme
 }
 
 func (err UnexpectedTokenError) Error() string {
-	return fmt.Sprintf("Unexpected token \"%s\" at position %d", err.l.Value, err.l.Start)
+	return fmt.Sprintf("Unexpected token \"%s\" at position %d", err.Lexeme.Value, err.Lexeme.Start)
 }
 
 type InvalidNumberError struct {
@@ -37,7 +37,7 @@ type InvalidNumberError struct {
 }
 
 func (err InvalidNumberError) Error() string {
-	return fmt.Sprintf("Invalid number token \"%s\" at position %d", err.l.Value, err.l.Start)
+	return fmt.Sprintf("Invalid number token \"%s\" at position %d", err.Lexeme.Value, err.Lexeme.Start)
 }
 
 var UnterminatedStatement = errors.New("Unterminated statement!")
@@ -83,6 +83,10 @@ func (p *parser) Parse() (RootNode, error) {
 		// We don't care about whitespace
 		if p.current.Type != lex.LWhitespace {
 			if err := p.dfa.Transition(p.current.Type.String()); err != nil {
+				if _, isInvalid := err.(dfa.InvalidMachineTransition); isInvalid {
+					return *root, UnexpectedTokenError{Lexeme: p.current}
+				}
+
 				return *root, err
 			}
 		}

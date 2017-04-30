@@ -172,6 +172,57 @@ func TestLetWithExpression(t *testing.T) {
 	assert.Equal(t, expected, testParse(parser, t))
 }
 
+func TestInvalidLetAssigned(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("=", lex.LEquals, 2),
+		testutil.MakeLexeme(";", lex.LSemiColon, 3),
+	})
+
+	_, err := parser.Parse()
+
+	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
+		t.Fatalf("Expected unexpected token error, but got: %v", err)
+	} else {
+		assert.Equal(t, "Unexpected token \"=\" at position 2", unexpectedToken.Error())
+	}
+}
+
+func TestInvalidLetWithoutType(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+		testutil.MakeLexeme("=", lex.LEquals, 3),
+		testutil.MakeLexeme(";", lex.LSemiColon, 4),
+	})
+
+	_, err := parser.Parse()
+
+	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
+		t.Fatalf("Expected unexpected token error, but got: %v", err)
+	} else {
+		assert.Equal(t, "Unexpected token \"=\" at position 3", unexpectedToken.Error())
+	}
+}
+
+func TestInvalidNestedLet(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+		testutil.MakeLexeme("string", lex.LIdentifier, 3),
+		testutil.MakeLexeme("=", lex.LEquals, 4),
+		testutil.MakeLexeme("let", lex.LLet, 5),
+	})
+
+	_, err := parser.Parse()
+
+	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
+		t.Fatalf("Expected unexpected token error, but got: %v", err)
+	} else {
+		assert.Equal(t, "Unexpected token \"let\" at position 5", unexpectedToken.Error())
+	}
+}
+
 func getParser(lexemes []lex.Lexeme) parse.Parser {
 	return parse.NewParser(testutil.NewSimpleLexer(lexemes))
 }
