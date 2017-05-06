@@ -258,7 +258,7 @@ func TestLet(t *testing.T) {
 			testutil.MakeLexeme(" ", lex.LWhitespace, 4),
 			testutil.MakeLexeme("a", lex.LIdentifier, 5),
 			testutil.MakeLexeme(" ", lex.LWhitespace, 6),
-			testutil.MakeLexeme("=", lex.LOperator, 7),
+			testutil.MakeLexeme("=", lex.LEquals, 7),
 			testutil.MakeLexeme(" ", lex.LWhitespace, 8),
 			testutil.MakeLexeme("1", lex.LNumber, 9),
 		},
@@ -369,8 +369,8 @@ func TestGte(t *testing.T) {
 
 func TestAssignment(t *testing.T) {
 	code :=
-		`let n : number = 4;
-let total : number = 0;`
+		`let n number = 4;
+let total number = 0;`
 
 	doTestGetNext(
 		t,
@@ -380,27 +380,23 @@ let total : number = 0;`
 			testutil.MakeLexeme(" ", lex.LWhitespace, 4),
 			testutil.MakeLexeme("n", lex.LIdentifier, 5),
 			testutil.MakeLexeme(" ", lex.LWhitespace, 6),
-			testutil.MakeLexeme(":", lex.LOperator, 7),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 8),
-			testutil.MakeLexeme("number", lex.LIdentifier, 9),
+			testutil.MakeLexeme("number", lex.LIdentifier, 7),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 13),
+			testutil.MakeLexeme("=", lex.LEquals, 14),
 			testutil.MakeLexeme(" ", lex.LWhitespace, 15),
-			testutil.MakeLexeme("=", lex.LOperator, 16),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 17),
-			testutil.MakeLexeme("4", lex.LNumber, 18),
-			testutil.MakeLexeme(";", lex.LSemiColon, 19),
-			testutil.MakeLexeme("\n", lex.LWhitespace, 20),
-			testutil.MakeLexeme("let", lex.LLet, 21),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 24),
-			testutil.MakeLexeme("total", lex.LIdentifier, 25),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 30),
-			testutil.MakeLexeme(":", lex.LOperator, 31),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 32),
-			testutil.MakeLexeme("number", lex.LIdentifier, 33),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 39),
-			testutil.MakeLexeme("=", lex.LOperator, 40),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 41),
-			testutil.MakeLexeme("0", lex.LNumber, 42),
-			testutil.MakeLexeme(";", lex.LSemiColon, 43),
+			testutil.MakeLexeme("4", lex.LNumber, 16),
+			testutil.MakeLexeme(";", lex.LSemiColon, 17),
+			testutil.MakeLexeme("\n", lex.LWhitespace, 18),
+			testutil.MakeLexeme("let", lex.LLet, 19),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 22),
+			testutil.MakeLexeme("total", lex.LIdentifier, 23),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 28),
+			testutil.MakeLexeme("number", lex.LIdentifier, 29),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 35),
+			testutil.MakeLexeme("=", lex.LEquals, 36),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 37),
+			testutil.MakeLexeme("0", lex.LNumber, 38),
+			testutil.MakeLexeme(";", lex.LSemiColon, 39),
 		},
 	)
 }

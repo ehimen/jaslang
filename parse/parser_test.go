@@ -122,17 +122,157 @@ func TestMultipleOperator(t *testing.T) {
 		parse.NewStatement(
 			parse.NewOperator(
 				"+",
-				parse.NewIdentifier("a"),
 				parse.NewOperator(
 					"+",
+					parse.NewIdentifier("a"),
 					parse.NewIdentifier("b"),
-					parse.NewIdentifier("c"),
 				),
+				parse.NewIdentifier("c"),
 			),
 		),
 	)
 
 	assert.Equal(t, expected, testParse(parser, t))
+}
+
+func TestLet(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+		testutil.MakeLexeme("number", lex.LIdentifier, 3),
+		testutil.MakeLexeme("=", lex.LEquals, 4),
+		testutil.MakeLexeme("1", lex.LNumber, 5),
+		testutil.MakeLexeme(";", lex.LSemiColon, 6),
+	})
+
+	expected := expectStatements(
+		parse.NewStatement(
+			&parse.Let{
+				Identifier: parse.NewIdentifier("foo"),
+				Type:       parse.NewIdentifier("number"),
+				Children: []parse.Node{
+					parse.NewNumber(1),
+				},
+			},
+		),
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
+}
+
+func TestLetWithExpression(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+		testutil.MakeLexeme("number", lex.LIdentifier, 3),
+		testutil.MakeLexeme("=", lex.LEquals, 4),
+		testutil.MakeLexeme("1", lex.LNumber, 5),
+		testutil.MakeLexeme("+", lex.LOperator, 6),
+		testutil.MakeLexeme("2", lex.LNumber, 7),
+		testutil.MakeLexeme("-", lex.LOperator, 8),
+		testutil.MakeLexeme("3", lex.LNumber, 9),
+		testutil.MakeLexeme(";", lex.LSemiColon, 10),
+	})
+
+	expected := expectStatements(
+		parse.NewStatement(
+			&parse.Let{
+				Identifier: parse.NewIdentifier("foo"),
+				Type:       parse.NewIdentifier("number"),
+				Children: []parse.Node{
+					parse.NewOperator(
+						"-",
+						parse.NewOperator(
+							"+",
+							parse.NewNumber(1),
+							parse.NewNumber(2),
+						),
+						parse.NewNumber(3),
+					),
+				},
+			},
+		),
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
+}
+
+func TestOperatorPrecedence(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("1", lex.LNumber, 1),
+		testutil.MakeLexeme("*", lex.LOperator, 2),
+		testutil.MakeLexeme("2", lex.LNumber, 3),
+		testutil.MakeLexeme("+", lex.LOperator, 4),
+		testutil.MakeLexeme("3", lex.LNumber, 5),
+		testutil.MakeLexeme(";", lex.LSemiColon, 6),
+	})
+
+	expected := expectStatements(
+		parse.NewStatement(
+			parse.NewOperator(
+				"+",
+				parse.NewOperator(
+					"*",
+					parse.NewNumber(1),
+					parse.NewNumber(2),
+				),
+				parse.NewNumber(3),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
+}
+
+func TestInvalidLetAssigned(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("=", lex.LEquals, 2),
+		testutil.MakeLexeme(";", lex.LSemiColon, 3),
+	})
+
+	_, err := parser.Parse()
+
+	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
+		t.Fatalf("Expected unexpected token error, but got: %v", err)
+	} else {
+		assert.Equal(t, "Unexpected token \"=\" at position 2", unexpectedToken.Error())
+	}
+}
+
+func TestInvalidLetWithoutType(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+		testutil.MakeLexeme("=", lex.LEquals, 3),
+		testutil.MakeLexeme(";", lex.LSemiColon, 4),
+	})
+
+	_, err := parser.Parse()
+
+	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
+		t.Fatalf("Expected unexpected token error, but got: %v", err)
+	} else {
+		assert.Equal(t, "Unexpected token \"=\" at position 3", unexpectedToken.Error())
+	}
+}
+
+func TestInvalidNestedLet(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+		testutil.MakeLexeme("string", lex.LIdentifier, 3),
+		testutil.MakeLexeme("=", lex.LEquals, 4),
+		testutil.MakeLexeme("let", lex.LLet, 5),
+	})
+
+	_, err := parser.Parse()
+
+	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
+		t.Fatalf("Expected unexpected token error, but got: %v", err)
+	} else {
+		assert.Equal(t, "Unexpected token \"let\" at position 5", unexpectedToken.Error())
+	}
 }
 
 func getParser(lexemes []lex.Lexeme) parse.Parser {

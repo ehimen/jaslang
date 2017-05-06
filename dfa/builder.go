@@ -1,11 +1,11 @@
 package dfa
 
 type MachineBuilder interface {
-	Path(string, string)
+	Path(string, string, string)
+	Paths([]string, string, []string)
 	WhenEntering(string, func() error) error
 	Accept(string) error
 	Start(string) (Machine, error)
-	Paths([]string, []string)
 }
 
 type machineBuilder struct {
@@ -16,7 +16,7 @@ func NewMachineBuilder() MachineBuilder {
 	return &machineBuilder{newMachine()}
 }
 
-func (builder *machineBuilder) Path(from string, to string) {
+func (builder *machineBuilder) Path(from string, how string, to string) {
 	if _, exists := builder.machine.states[from]; !exists {
 		builder.machine.states[from] = newState(from)
 	}
@@ -25,13 +25,13 @@ func (builder *machineBuilder) Path(from string, to string) {
 		builder.machine.states[to] = newState(to)
 	}
 
-	builder.machine.states[from].paths[to] = builder.machine.states[to]
+	builder.machine.states[from].paths[how] = builder.machine.states[to]
 }
 
-func (builder *machineBuilder) Paths(from []string, to []string) {
+func (builder *machineBuilder) Paths(from []string, how string, to []string) {
 	for _, f := range from {
 		for _, t := range to {
-			builder.Path(f, t)
+			builder.Path(f, how, t)
 		}
 	}
 }
