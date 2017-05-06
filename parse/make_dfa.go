@@ -26,14 +26,10 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.Path(start, quoted, quoted)
 	builder.Path(start, ltrue, ltrue)
 	builder.Path(start, lfalse, lfalse)
-	builder.Path(start, identifier, identifier)
 	builder.Path(start, let, let)
+	builder.Path(start, term, term)
 
 	buildExpr(p, builder, "", start, term, term)
-
-	builder.Path(identifier, parenOpen, parenOpen)
-	builder.Path(identifier, operator, operator)
-	builder.Path(identifier, term, term)
 
 	builder.Path(quoted, term, term)
 	builder.Path(quoted, parenClose, parenClose)
@@ -43,10 +39,6 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.Path(ltrue, term, term)
 
 	builder.Path(lfalse, term, term)
-
-	builder.Path(parenOpen, quoted, quoted)
-
-	builder.Path(parenClose, term, term)
 
 	builder.Path(term, number, number)
 	builder.Path(term, quoted, quoted)
@@ -60,7 +52,6 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.WhenEntering("let-identifier", p.createIdentifier)
 	builder.WhenEntering("let-type-identifier", p.createIdentifier)
 
-	builder.WhenEntering(identifier, p.createIdentifier)
 	builder.WhenEntering(quoted, p.createStringLiteral)
 	builder.WhenEntering(parenClose, p.closeNode)
 	builder.WhenEntering(term, p.closeNode)
@@ -89,13 +80,25 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	}
 
 	exprNumber := prefix + lex.LNumber.String()
+	exprString := prefix + lex.LQuoted.String()
 	exprOperator := prefix + lex.LOperator.String()
+	exprIdentifier := prefix + lex.LIdentifier.String()
+	exprParenOpen := prefix + lex.LParenOpen.String()
 
 	b.Path(from, number, exprNumber)
-	b.Path(exprNumber, operator, exprOperator)
+	b.Path(from, identifier, exprIdentifier)
+	b.Path(exprIdentifier, operator, exprOperator)
+	b.Path(exprIdentifier, parenOpen, exprParenOpen)
+	b.Path(exprIdentifier, returnVia, returnTo)
+	b.Path(exprParenOpen, quoted, exprString)
 	b.Path(exprOperator, number, exprNumber)
+	b.Path(exprOperator, identifier, exprIdentifier)
+	b.Path(exprNumber, operator, exprOperator)
 	b.Path(exprNumber, returnVia, returnTo)
+	b.Path(exprString, parenClose, from)
 
 	b.WhenEntering(exprNumber, p.createNumberLiteral)
+	b.WhenEntering(exprString, p.createStringLiteral)
+	b.WhenEntering(exprIdentifier, p.createIdentifier)
 	b.WhenEntering(exprOperator, p.createOperator)
 }

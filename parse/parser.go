@@ -21,9 +21,10 @@ type parser struct {
 	dfa            dfa.Machine
 	current        lex.Lexeme
 	next           lex.Lexeme
-	nodeStack      []Node
+	nodeStack      []ContainsChildren
 	statementStack []Statement
 	operators      *operations.Register
+	ast            *RootNode
 }
 
 type UnexpectedTokenError struct {
@@ -48,6 +49,7 @@ func NewParser(lexer lex.Lexer) Parser {
 	parser := parser{lexer: lexer, operators: operations.NewRegister()}
 
 	parser.operators.Register(operations.Sum{})
+	parser.operators.Register(operations.Subtract{})
 	parser.operators.Register(operations.Multiply{})
 
 	machine, err := buildDfa(&parser)
@@ -63,8 +65,8 @@ func NewParser(lexer lex.Lexer) Parser {
 
 func (p *parser) Parse() (RootNode, error) {
 	root := &RootNode{}
-
-	p.nodeStack = []Node{root}
+	p.ast = root
+	p.nodeStack = []ContainsChildren{}
 
 	if next, eof, err := p.consume(); eof != nil {
 		return *root, nil
@@ -168,31 +170,68 @@ func (p *parser) push(node Node) error {
 	context := getContext(p)
 
 	// Insert a statement if we need to.
-	if root, isRoot := context.(*RootNode); isRoot {
+	if context == nil {
 		statement := &Statement{}
-		root.PushStatement(statement)
+		p.ast.PushStatement(statement)
 		p.nodeStack = append(p.nodeStack, statement)
+	}
+
+	var nodeStackPosition int
+
+	if nodeContainingChildren, nodeContainsChildren := node.(ContainsChildren); nodeContainsChildren {
+		// Loop over context up the AST until we:
+		// 1. Find a context we should should replace.
+		// 2. Run out of adjustable AST; simply put it as a child
+		//    of the context before we started this loop.
+		nodeStackPosition = len(p.nodeStack) - 1
+
+		for {
+
+			if nodeStackPosition < 0 {
+				// Run out of AST
+				break
+			}
+
+			toReplace := p.nodeStack[nodeStackPosition]
+
+			if adjustableParent, isAdjustable := toReplace.(Adjustable); isAdjustable {
+
+				if priority := p.shouldReplaceLastChildOf(nodeContainingChildren, adjustableParent); priority != nil {
+					lastChild := adjustableParent.getLastChild()
+
+					// Take the last child of our parent
+					adjustableParent.removeLastChild()
+
+					// Push this child on to our new node.
+					if err, _ := priority.push(lastChild); err != nil {
+						return err
+					}
+
+					// Strip the node stack back to the current parent.
+					// Those stripped have become children of our
+					// current node.
+					p.nodeStack = p.nodeStack[0 : nodeStackPosition+1]
+
+					// Now all that remains is to push our new node to
+					// the new parent and add our new node to the
+					// stack. This all happens as normal outside of
+					// this loop.
+					break
+
+				} else {
+					nodeStackPosition--
+				}
+			} else {
+				// Hit a non adjustableParent in the AST; stop trying to replace.
+				break
+			}
+		}
 	}
 
 	context = getContext(p)
 
-	if parent, isParent := context.(ContainsChildren); isParent {
-
-		if adjustable, isAdjustable := parent.(Adjustable); isAdjustable {
-			lastChild := adjustable.getLastChild()
-
-			if priority := p.takesPrecedence(node, lastChild); priority != nil {
-				adjustable.removeLastChild()
-				if err, _ := priority.push(lastChild); err != nil {
-					return err
-				}
-			}
-		}
-
-		if err, _ := parent.push(node); err != nil {
-			return err
-		}
-
+	if err, _ := context.push(node); err != nil {
+		return err
 	}
 
 	if parent, isParent := node.(ContainsChildren); isParent {
@@ -202,39 +241,77 @@ func (p *parser) push(node Node) error {
 	return nil
 }
 
-// Returns what if over is what is a parent and over
-// is not. If both over and what are operators, will
-// return what if it has a higher precedence according
-// to our operator register.
-func (p parser) takesPrecedence(what Node, over Node) ContainsChildren {
-	if over == nil {
+// Returns replacer if it should replace the last child
+// of parent.
+// This is true when replacer and parent are operators,
+// and replacer has a higher precedence. This ensures that
+// replacer appears lower in the AST, thus it is evaluated
+// first (e.g. "1 + 2 * 3" is "1 + (2 * 3), replacer is *,
+// parent is *).
+// Also true when parent's last child and replacer are
+// operators, but replacer does not takes precedence
+// over the last child. Ensures that operators are chained
+// and the first operator lower in the AST, thus evaluated
+// first (e.g. "1 + 2 + 3" is "(1 + 2) + 3", replacer is
+// second +, parent is statement whose last child is first +).
+// Also true when parent's last child does not contain
+// children and our replacer is an operator. Ensures that lone
+// nodes are placed under an operator as an operator (for now)
+// always takes a LHS argument.
+func (p parser) shouldReplaceLastChildOf(replacer ContainsChildren, parent Adjustable) ContainsChildren {
+
+	// Check operator precedence.
+	parentOperator, parentIsOperator := parent.(*Operator)
+	replacerOperator, replacerIsOperator := replacer.(*Operator)
+
+	if !replacerIsOperator {
 		return nil
 	}
 
-	_, overIsParent := over.(ContainsChildren)
+	if parentIsOperator {
+		takesPrecedence, err := p.operators.TakesPrecedence(replacerOperator.Operator, parentOperator.Operator)
+		// TODO: error checking
 
-	if what, whatIsParent := what.(ContainsChildren); whatIsParent && !overIsParent {
-
-		// Check operator precedence.
-		overOperator, overIsOperator := over.(*Operator)
-		whatOperator, whatIsOperator := what.(*Operator)
-
-		if whatIsOperator && overIsOperator {
-			takesPrecedence, err := p.operators.TakesPrecedence(whatOperator.Operator, overOperator.Operator)
-			// TODO: error checking
-			if takesPrecedence && err == nil {
-				return what
-			} else {
-				return nil
-			}
+		// If the parent is an operator and replacer
+		// takes precedence over it, replacer should
+		// take the last child of parent.
+		if takesPrecedence && err == nil {
+			return replacer
+		} else {
+			return nil
 		}
+	}
 
-		return what
+	lastChild := parent.getLastChild()
+	lastChildOperator, lastChildIsOperator := lastChild.(*Operator)
+
+	if lastChildIsOperator {
+		takesPrecedence, err := p.operators.TakesPrecedence(replacerOperator.Operator, lastChildOperator.Operator)
+		// TODO: error checking
+
+		// If our replacer does not take precedence over
+		// parent's last child, it should replace the parent.
+		if !takesPrecedence && err == nil {
+			return replacer
+		} else {
+			return nil
+		}
+	}
+
+	// If our parent's last child is not an operators
+	// and does not contain children, and our replacer is an
+	// operator, we should replace.
+	if _, lastChildContainsChildren := lastChild.(ContainsChildren); !lastChildContainsChildren {
+		return replacer
 	}
 
 	return nil
 }
 
-func getContext(p *parser) Node {
+func getContext(p *parser) ContainsChildren {
+	if len(p.nodeStack) == 0 {
+		return nil
+	}
+
 	return p.nodeStack[len(p.nodeStack)-1]
 }

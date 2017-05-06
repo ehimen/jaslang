@@ -44,6 +44,10 @@ func (r *Register) Register(operation Operation) error {
 	return nil
 }
 
+// Returns true if what is higher precedence than over,
+// i.e. what should be evaluated before over.
+// If either operator is unknown to this register,
+// this will return false.
 func (r *Register) TakesPrecedence(what string, over string) (bool, error) {
 	if whatOperator, exists := r.operations[what]; !exists {
 		return false, UnknownOperatorError{operator: what}

@@ -10,6 +10,16 @@ func (s Sum) Precedence() int {
 	return 0
 }
 
+type Subtract struct{}
+
+func (s Subtract) Operator() string {
+	return "-"
+}
+
+func (s Subtract) Precedence() int {
+	return 0
+}
+
 type Multiply struct{}
 
 func (m Multiply) Operator() string {

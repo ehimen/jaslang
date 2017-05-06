@@ -113,9 +113,6 @@ func (let *Let) push(child Node) (error, bool) {
 	return nil, true
 }
 
-// getLastChild() Node
-// removeLastChild()
-
 func (let *Let) getLastChild() Node {
 	if len(let.Children) > 0 {
 		return let.Children[len(let.Children)-1]

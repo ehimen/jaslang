@@ -122,13 +122,38 @@ func TestMultipleOperator(t *testing.T) {
 		parse.NewStatement(
 			parse.NewOperator(
 				"+",
-				parse.NewIdentifier("a"),
 				parse.NewOperator(
 					"+",
+					parse.NewIdentifier("a"),
 					parse.NewIdentifier("b"),
-					parse.NewIdentifier("c"),
 				),
+				parse.NewIdentifier("c"),
 			),
+		),
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
+}
+
+func TestLet(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("let", lex.LLet, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+		testutil.MakeLexeme("number", lex.LIdentifier, 3),
+		testutil.MakeLexeme("=", lex.LEquals, 4),
+		testutil.MakeLexeme("1", lex.LNumber, 5),
+		testutil.MakeLexeme(";", lex.LSemiColon, 6),
+	})
+
+	expected := expectStatements(
+		parse.NewStatement(
+			&parse.Let{
+				Identifier: parse.NewIdentifier("foo"),
+				Type:       parse.NewIdentifier("number"),
+				Children: []parse.Node{
+					parse.NewNumber(1),
+				},
+			},
 		),
 	)
 
@@ -156,13 +181,13 @@ func TestLetWithExpression(t *testing.T) {
 				Type:       parse.NewIdentifier("number"),
 				Children: []parse.Node{
 					parse.NewOperator(
-						"+",
-						parse.NewNumber(1),
+						"-",
 						parse.NewOperator(
-							"-",
+							"+",
+							parse.NewNumber(1),
 							parse.NewNumber(2),
-							parse.NewNumber(3),
 						),
+						parse.NewNumber(3),
 					),
 				},
 			},
@@ -184,21 +209,15 @@ func TestOperatorPrecedence(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
-			&parse.Let{
-				Identifier: parse.NewIdentifier("foo"),
-				Type:       parse.NewIdentifier("number"),
-				Children: []parse.Node{
-					parse.NewOperator(
-						"+",
-						parse.NewOperator(
-							"*",
-							parse.NewNumber(1),
-							parse.NewNumber(2),
-						),
-						parse.NewNumber(3),
-					),
-				},
-			},
+			parse.NewOperator(
+				"+",
+				parse.NewOperator(
+					"*",
+					parse.NewNumber(1),
+					parse.NewNumber(2),
+				),
+				parse.NewNumber(3),
+			),
 		),
 	)
 
