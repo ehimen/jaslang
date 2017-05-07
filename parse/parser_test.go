@@ -224,6 +224,33 @@ func TestOperatorPrecedence(t *testing.T) {
 	assert.Equal(t, expected, testParse(parser, t))
 }
 
+func TestOperatorAndFunction(t *testing.T) {
+	parser := getParser([]lex.Lexeme{
+		testutil.MakeLexeme("a", lex.LIdentifier, 1),
+		testutil.MakeLexeme("+", lex.LOperator, 2),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 3),
+		testutil.MakeLexeme("(", lex.LParenOpen, 4),
+		testutil.MakeLexeme("b", lex.LIdentifier, 5),
+		testutil.MakeLexeme(")", lex.LParenClose, 6),
+		testutil.MakeLexeme(";", lex.LSemiColon, 7),
+	})
+
+	expected := expectStatements(
+		parse.NewStatement(
+			parse.NewOperator(
+				"+",
+				parse.NewIdentifier("a"),
+				parse.NewFunctionCall(
+					"foo",
+					parse.NewIdentifier("b"),
+				),
+			),
+		),
+	)
+
+	assert.Equal(t, expected, testParse(parser, t))
+}
+
 func TestInvalidLetAssigned(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
 		testutil.MakeLexeme("let", lex.LLet, 1),
@@ -287,7 +314,12 @@ func testParse(p parse.Parser, t *testing.T) parse.RootNode {
 	node, err := p.Parse()
 
 	if err != nil {
-		t.Fatalf("Unexpected Parse() error: %v", err)
+
+		if invalidTokenErr, isInvalidToken := err.(parse.UnexpectedTokenError); isInvalidToken {
+			t.Fatalf("%v, debug: %s", invalidTokenErr, invalidTokenErr.Debug)
+		} else {
+			t.Fatalf("Unexpected Parse() error: %v", err)
+		}
 	}
 
 	return node

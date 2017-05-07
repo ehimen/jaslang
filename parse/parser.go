@@ -29,6 +29,7 @@ type parser struct {
 
 type UnexpectedTokenError struct {
 	Lexeme lex.Lexeme
+	Debug  string
 }
 
 func (err UnexpectedTokenError) Error() string {
@@ -91,7 +92,7 @@ func (p *parser) Parse() (RootNode, error) {
 		if p.current.Type != lex.LWhitespace {
 			if err := p.dfa.Transition(p.current.Type.String()); err != nil {
 				if _, isInvalid := err.(dfa.InvalidMachineTransition); isInvalid {
-					return *root, UnexpectedTokenError{Lexeme: p.current}
+					return *root, UnexpectedTokenError{Lexeme: p.current, Debug: p.dfa.DebugRoute()}
 				}
 
 				return *root, err
@@ -146,7 +147,7 @@ func (p *parser) createNumberLiteral() error {
 	if number, err := strconv.ParseFloat(p.current.Value, 64); err == nil {
 		p.push(NewNumber(number))
 	} else {
-		return InvalidNumberError{UnexpectedTokenError{p.current}}
+		return InvalidNumberError{UnexpectedTokenError{Lexeme: p.current}}
 	}
 
 	return nil
@@ -176,14 +177,12 @@ func (p *parser) push(node Node) error {
 		p.nodeStack = append(p.nodeStack, statement)
 	}
 
-	var nodeStackPosition int
-
 	if nodeContainingChildren, nodeContainsChildren := node.(ContainsChildren); nodeContainsChildren {
 		// Loop over context up the AST until we:
 		// 1. Find a context we should should replace.
 		// 2. Run out of adjustable AST; simply put it as a child
 		//    of the context before we started this loop.
-		nodeStackPosition = len(p.nodeStack) - 1
+		nodeStackPosition := len(p.nodeStack) - 1
 
 		for {
 
@@ -222,7 +221,7 @@ func (p *parser) push(node Node) error {
 					nodeStackPosition--
 				}
 			} else {
-				// Hit a non adjustableParent in the AST; stop trying to replace.
+				// Hit a non-adjustable parent in the AST; stop trying to replace.
 				break
 			}
 		}

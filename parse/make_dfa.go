@@ -22,7 +22,6 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 
 	builder := dfa.NewMachineBuilder()
 
-	builder.Path(start, number, number)
 	builder.Path(start, quoted, quoted)
 	builder.Path(start, ltrue, ltrue)
 	builder.Path(start, lfalse, lfalse)
@@ -89,8 +88,10 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.Path(from, identifier, exprIdentifier)
 	b.Path(exprIdentifier, operator, exprOperator)
 	b.Path(exprIdentifier, parenOpen, exprParenOpen)
+	b.Path(exprIdentifier, parenClose, from)
 	b.Path(exprIdentifier, returnVia, returnTo)
 	b.Path(exprParenOpen, quoted, exprString)
+	b.Path(exprParenOpen, identifier, exprIdentifier)
 	b.Path(exprOperator, number, exprNumber)
 	b.Path(exprOperator, identifier, exprIdentifier)
 	b.Path(exprNumber, operator, exprOperator)
