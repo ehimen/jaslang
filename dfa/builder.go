@@ -1,8 +1,13 @@
 package dfa
 
+import (
+	"errors"
+	"fmt"
+)
+
 type MachineBuilder interface {
-	Path(string, string, string)
-	Paths([]string, string, []string)
+	Path(string, string, string) error
+	Paths([]string, string, []string) error
 	WhenEntering(string, func() error) error
 	Accept(string) error
 	Start(string) (Machine, error)
@@ -16,7 +21,7 @@ func NewMachineBuilder() MachineBuilder {
 	return &machineBuilder{newMachine()}
 }
 
-func (builder *machineBuilder) Path(from string, how string, to string) {
+func (builder *machineBuilder) Path(from string, how string, to string) error {
 	if _, exists := builder.machine.states[from]; !exists {
 		builder.machine.states[from] = newState(from)
 	}
@@ -25,16 +30,25 @@ func (builder *machineBuilder) Path(from string, how string, to string) {
 		builder.machine.states[to] = newState(to)
 	}
 
-	// TODO: bug here that silently overrides an existing path.
+	if _, exists := builder.machine.states[from].paths[how]; exists {
+		return errors.New(fmt.Sprintf(`Path "%s" already exists from "%s"`, how, from))
+	}
+
 	builder.machine.states[from].paths[how] = builder.machine.states[to]
+
+	return nil
 }
 
-func (builder *machineBuilder) Paths(from []string, how string, to []string) {
+func (builder *machineBuilder) Paths(from []string, how string, to []string) error {
 	for _, f := range from {
 		for _, t := range to {
-			builder.Path(f, how, t)
+			if err := builder.Path(f, how, t); err != nil {
+				return err
+			}
 		}
 	}
+
+	return nil
 }
 
 func (builder *machineBuilder) Accept(what string) error {

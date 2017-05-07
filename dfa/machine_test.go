@@ -191,14 +191,14 @@ func TestWhenFnFailsTransitionFails(t *testing.T) {
 func TestPaths(t *testing.T) {
 	builder := getMachineBuilder()
 
-	builder.Paths([]string{"one", "two"}, "transition", []string{"one", "two"})
-	builder.Accept("two")
+	builder.Paths([]string{"one", "two"}, "1", []string{"three", "four"})
+	builder.Paths([]string{"three"}, "2", []string{"four"})
+	builder.Accept("four")
 
 	machine := build(builder, "one", t)
 
-	machine.Transition("transition")
-	machine.Transition("transition")
-	machine.Transition("transition")
+	machine.Transition("1")
+	machine.Transition("2")
 
 	if err := machine.Finish(); err != nil {
 		t.Errorf("Expected multiple paths to succeed, but it didn't: %v", err)
@@ -220,6 +220,25 @@ func TestDebugRoute(t *testing.T) {
 	machine.Transition("1")
 
 	assert.Equal(t, "ORIGIN: one >>1>> two >>2>> three >>3>> one >>1>> two", machine.DebugRoute())
+}
+
+func TestPathFailsIfTransitionExists(t *testing.T) {
+	builder := getMachineBuilder()
+
+	builder.Path("one", "1", "two")
+	err := builder.Path("one", "1", "three")
+
+	assert.Error(t, err)
+	assert.Equal(t, err.Error(), `Path "1" already exists from "one"`)
+}
+
+func TestPathsFailsIfTransitionExists(t *testing.T) {
+	builder := getMachineBuilder()
+
+	err := builder.Paths([]string{"one", "two"}, "transition", []string{"one", "two"})
+
+	assert.Error(t, err)
+	assert.Equal(t, err.Error(), `Path "transition" already exists from "one"`)
 }
 
 func build(builder dfa.MachineBuilder, start string, t *testing.T) dfa.Machine {
