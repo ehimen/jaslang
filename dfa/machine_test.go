@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/ehimen/jaslang/dfa"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddState(t *testing.T) {
@@ -202,6 +203,23 @@ func TestPaths(t *testing.T) {
 	if err := machine.Finish(); err != nil {
 		t.Errorf("Expected multiple paths to succeed, but it didn't: %v", err)
 	}
+}
+
+func TestDebugRoute(t *testing.T) {
+	builder := getMachineBuilder()
+
+	builder.Path("one", "1", "two")
+	builder.Path("two", "2", "three")
+	builder.Path("three", "3", "one")
+
+	machine := build(builder, "one", t)
+
+	machine.Transition("1")
+	machine.Transition("2")
+	machine.Transition("3")
+	machine.Transition("1")
+
+	assert.Equal(t, "ORIGIN: one >>1>> two >>2>> three >>3>> one >>1>> two", machine.DebugRoute())
 }
 
 func build(builder dfa.MachineBuilder, start string, t *testing.T) dfa.Machine {

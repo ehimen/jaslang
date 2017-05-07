@@ -25,6 +25,7 @@ func (builder *machineBuilder) Path(from string, how string, to string) {
 		builder.machine.states[to] = newState(to)
 	}
 
+	// TODO: bug here that silently overrides an existing path.
 	builder.machine.states[from].paths[how] = builder.machine.states[to]
 }
 
@@ -64,6 +65,7 @@ func (builder *machineBuilder) Start(where string) (Machine, error) {
 	}
 
 	builder.machine.current = builder.machine.states[where]
+	builder.machine.route = append(builder.machine.route, trace{state: *builder.machine.current})
 
 	return builder.machine, nil
 }

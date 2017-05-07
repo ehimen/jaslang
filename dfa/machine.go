@@ -15,12 +15,19 @@ type state struct {
 type Machine interface {
 	Transition(string) error
 	Finish() error
+	DebugRoute() string
+}
+
+type trace struct {
+	path  string
+	state state
 }
 
 type machine struct {
 	current  *state
 	states   map[string]*state
 	finished bool
+	route    []trace
 }
 
 type UnacceptableMachineFinishState struct {
@@ -73,6 +80,7 @@ func (machine *machine) Transition(how string) error {
 	}
 
 	machine.current = machine.current.paths[how]
+	machine.route = append(machine.route, trace{path: how, state: *machine.current})
 
 	// Call all functions as we enter this new state
 	for _, fn := range machine.current.whenEntering {
@@ -95,6 +103,21 @@ func (machine *machine) Finish() error {
 	}
 
 	return UnacceptableMachineFinishState{machine.current.name}
+}
+
+func (machine *machine) DebugRoute() string {
+	trace := ""
+
+	for i, element := range machine.route {
+		if i == 0 {
+			// Start state
+			trace = "ORIGIN: " + element.state.name
+		} else {
+			trace = fmt.Sprintf("%s >>%s>> %s", trace, element.path, element.state.name)
+		}
+	}
+
+	return trace
 }
 
 func validateState(machine *machine, state string) error {
