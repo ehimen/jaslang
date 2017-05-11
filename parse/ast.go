@@ -9,6 +9,7 @@ type Node interface {
 
 type ContainsChildren interface {
 	push(child Node) (error, bool)
+	Children() []Node
 }
 
 type Adjustable interface {
@@ -18,33 +19,41 @@ type Adjustable interface {
 }
 
 // Can be embedded in to all node types that
-// have Children.
+// have children.
 type ParentNode struct {
-	Children []Node
+	children []Node
 }
 
 func (parent *ParentNode) push(child Node) (error, bool) {
-	parent.Children = append(parent.Children, child)
+	parent.children = append(parent.children, child)
 
 	return nil, true
 }
 
 func (parent *ParentNode) getLastChild() Node {
-	if len(parent.Children) > 0 {
-		return parent.Children[len(parent.Children)-1]
+	if len(parent.children) > 0 {
+		return parent.children[len(parent.children)-1]
 	}
 
 	return nil
 }
 
+func (parent *ParentNode) Children() []Node {
+	return parent.children
+}
+
 func (parent *ParentNode) removeLastChild() {
-	if len(parent.Children) == 0 {
+	if len(parent.children) == 0 {
 		return
 	}
 
-	parent.Children = parent.Children[0 : len(parent.Children)-1]
+	parent.children = parent.children[0 : len(parent.children)-1]
 }
 
+// TODO: do we make this ContainsChildren? Would simplify logic,
+// TODO: but we lose the strictness of pushing only children.
+// TODO: Maybe have a separate AcceptsAnyChild and ContainsChildren
+// TODO: interfaces? AcceptsAnyChild.push(), ContainsChildren.Children().
 type RootNode struct {
 	Statements []*Statement
 }
@@ -131,11 +140,11 @@ func (let *Let) removeLastChild() {
 }
 
 func NewStatement(children ...Node) *Statement {
-	return &Statement{ParentNode: ParentNode{Children: children}}
+	return &Statement{ParentNode: ParentNode{children: children}}
 }
 
 func NewFunctionCall(identifier string, children ...Node) *FunctionCall {
-	return &FunctionCall{Identifier: NewIdentifier(identifier), ParentNode: ParentNode{Children: children}}
+	return &FunctionCall{Identifier: NewIdentifier(identifier), ParentNode: ParentNode{children: children}}
 }
 
 func NewIdentifier(identifier string) *Identifier {
@@ -143,7 +152,7 @@ func NewIdentifier(identifier string) *Identifier {
 }
 
 func NewOperator(operator string, children ...Node) *Operator {
-	return &Operator{Operator: operator, ParentNode: ParentNode{Children: children}}
+	return &Operator{Operator: operator, ParentNode: ParentNode{children: children}}
 }
 
 func NewString(value string) *String {
