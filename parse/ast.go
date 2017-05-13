@@ -95,7 +95,7 @@ type Operator struct {
 type Let struct {
 	Identifier *Identifier
 	Type       *Identifier
-	Children   []Node
+	children   []Node
 }
 
 func (let *Let) push(child Node) (error, bool) {
@@ -117,14 +117,14 @@ func (let *Let) push(child Node) (error, bool) {
 		}
 	}
 
-	let.Children = append(let.Children, child)
+	let.children = append(let.children, child)
 
 	return nil, true
 }
 
 func (let *Let) getLastChild() Node {
-	if len(let.Children) > 0 {
-		return let.Children[len(let.Children)-1]
+	if len(let.children) > 0 {
+		return let.children[len(let.children)-1]
 	}
 
 	// Deliberately don't return type or identifier; these
@@ -134,9 +134,13 @@ func (let *Let) getLastChild() Node {
 }
 
 func (let *Let) removeLastChild() {
-	if len(let.Children) > 0 {
-		let.Children = let.Children[0 : len(let.Children)-1]
+	if len(let.children) > 0 {
+		let.children = let.children[0 : len(let.children)-1]
 	}
+}
+
+func (let *Let) Children() []Node {
+	return let.children
 }
 
 func NewStatement(children ...Node) *Statement {
@@ -167,6 +171,6 @@ func NewNumber(value float64) *Number {
 	return &Number{value}
 }
 
-func NewLet() *Let {
-	return &Let{}
+func NewLet(identifier string, typeIdentifier string, children ...Node) *Let {
+	return &Let{children: children, Identifier: NewIdentifier(identifier), Type: NewIdentifier(typeIdentifier)}
 }

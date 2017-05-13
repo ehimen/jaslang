@@ -147,13 +147,11 @@ func TestLet(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
-			&parse.Let{
-				Identifier: parse.NewIdentifier("foo"),
-				Type:       parse.NewIdentifier("number"),
-				Children: []parse.Node{
-					parse.NewNumber(1),
-				},
-			},
+			parse.NewLet(
+				"foo",
+				"number",
+				parse.NewNumber(1),
+			),
 		),
 	)
 
@@ -176,21 +174,19 @@ func TestLetWithExpression(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
-			&parse.Let{
-				Identifier: parse.NewIdentifier("foo"),
-				Type:       parse.NewIdentifier("number"),
-				Children: []parse.Node{
+			parse.NewLet(
+				"foo",
+				"number",
+				parse.NewOperator(
+					"-",
 					parse.NewOperator(
-						"-",
-						parse.NewOperator(
-							"+",
-							parse.NewNumber(1),
-							parse.NewNumber(2),
-						),
-						parse.NewNumber(3),
+						"+",
+						parse.NewNumber(1),
+						parse.NewNumber(2),
 					),
-				},
-			},
+					parse.NewNumber(3),
+				),
+			),
 		),
 	)
 
