@@ -7,5 +7,5 @@ import (
 type Context struct {
 	Table  *SymbolTable
 	Input  io.Reader
-	Writer io.Writer
+	Output io.Writer
 }

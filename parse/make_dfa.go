@@ -91,11 +91,13 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.Path(exprIdentifier, parenClose, from)
 	b.Path(exprIdentifier, returnVia, returnTo)
 	b.Path(exprParenOpen, quoted, exprString)
+	b.Path(exprParenOpen, number, exprNumber)
 	b.Path(exprParenOpen, identifier, exprIdentifier)
 	b.Path(exprOperator, number, exprNumber)
 	b.Path(exprOperator, identifier, exprIdentifier)
 	b.Path(exprNumber, operator, exprOperator)
 	b.Path(exprNumber, returnVia, returnTo)
+	b.Path(exprNumber, parenClose, from)
 	b.Path(exprString, parenClose, from)
 
 	b.WhenEntering(exprNumber, p.createNumberLiteral)

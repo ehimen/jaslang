@@ -1,8 +1,6 @@
 package functions
 
 import (
-	"fmt"
-
 	"github.com/ehimen/jaslang/runtime"
 )
 
@@ -18,10 +16,7 @@ func (p Println) String() string {
 }
 
 func (p Println) Invoke(context *runtime.Context, args []runtime.Value) {
-	// TODO: For some reason, context's input & output are nil when they get here,
-	// TODO: They look good when this is called, just borked when we arrive =/
-	fmt.Printf("%+v\n", context)
-	context.Writer.Write([]byte("foo"))
-	//for _ := range args {
-	//}
+	for _, arg := range args {
+		context.Output.Write([]byte(arg.String()))
+	}
 }

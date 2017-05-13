@@ -10,8 +10,6 @@ import (
 )
 
 func main() {
-	fmt.Println("Running jaslang interpreter")
-
 	code := strings.NewReader(`println("Hello world!");`)
 	input := strings.NewReader("")
 	output := bytes.NewBufferString("")
@@ -20,5 +18,5 @@ func main() {
 		fmt.Printf("%v\n", err)
 	}
 
-	println(output.String())
+	fmt.Println(output.String())
 }

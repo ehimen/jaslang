@@ -14,8 +14,6 @@ type Evaluator interface {
 
 type evaluator struct {
 	context *runtime.Context
-	input   io.Reader
-	output  io.Writer
 }
 
 func NewEvaluator(input io.Reader, output io.Writer) Evaluator {
@@ -23,7 +21,7 @@ func NewEvaluator(input io.Reader, output io.Writer) Evaluator {
 
 	table.AddFunction("println", functions.Println{})
 
-	return &evaluator{context: &runtime.Context{Table: table}, input: input, output: output}
+	return &evaluator{context: &runtime.Context{Table: table, Input: input, Output: output}}
 }
 
 func (e *evaluator) Evaluate(node parse.Node) error {
@@ -78,7 +76,6 @@ func (e *evaluator) evaluate(node parse.Node) (runtime.Value, error) {
 }
 
 func (e *evaluator) evaluateFunctionCall(fn *parse.FunctionCall, args []runtime.Value) (runtime.Value, error) {
-	println("Evaluating fn")
 	if invokable, err := e.context.Table.Invokable(fn.Identifier.Identifier); err != nil {
 		return nil, err
 	} else {
