@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	code := strings.NewReader(`println("Hello world!");`)
+	code := strings.NewReader(`println(1 + 2);`)
 	input := strings.NewReader("")
 	output := bytes.NewBufferString("")
 

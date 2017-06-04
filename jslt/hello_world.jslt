@@ -1,0 +1,13 @@
+<!Hello world
+<<<CODE
+println("Hello world!");
+<<<INPUT
+<<<ERROR
+<<<OUTPUT
+Hello world!
+
+<!Hello world 2
+<<<CODE
+println("Hello world 2!");
+<<<OUTPUT
+Hello world 2!
