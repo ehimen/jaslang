@@ -2,6 +2,8 @@ package operations
 
 import (
 	"fmt"
+
+	"github.com/ehimen/jaslang/runtime"
 )
 
 // Defines an operation (e.g. +, * etc)
@@ -20,6 +22,7 @@ import (
 type Operation interface {
 	Operator() string
 	Precedence() int
+	Invokable() runtime.Invokable
 }
 
 type Register struct {

@@ -15,7 +15,7 @@ type Number struct {
 }
 
 func (n Number) String() string {
-	return fmt.Sprintf("%f", n.Value)
+	return fmt.Sprintf("%.3f", n.Value)
 }
 
 type Boolean struct {

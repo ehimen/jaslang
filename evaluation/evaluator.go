@@ -84,3 +84,7 @@ func (e *evaluator) evaluateFunctionCall(fn *parse.FunctionCall, args []runtime.
 
 	return nil, nil
 }
+
+func (e *evaluator) evaluateOperator(fn *parse.Operator, args []runtime.Value) (runtime.Value, error) {
+	e.context.
+}

@@ -8,6 +8,6 @@ Hello world!
 
 <!Hello world 2
 <<<CODE
-println("Hello world 2!");
+println(3 + 4);
 <<<OUTPUT
-Hello world 2!
+7.000
