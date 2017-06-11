@@ -51,16 +51,17 @@ func runTest(t *testing.T, test testCase) {
 
 	actual := bytes.NewBufferString("")
 
-	run.Interpret(test.code, test.input, actual)
+	err := run.Interpret(test.code, test.input, actual)
 
 	if actual.String() != string(expected) {
 		test.code.Seek(0, io.SeekStart)
 		code, _ := ioutil.ReadAll(test.code)
 		t.Errorf(
-			"\"%s\" failed!\nExpected output:\n%s\nActual output:\n%s\nCode:\n%s\n",
+			"\"%s\" failed!\nExpected output:\n%s\nActual output:\n%s\nErrors:\n%s\nCode:\n%s\n",
 			test.name,
 			expected,
 			actual.String(),
+			err,
 			code,
 		)
 	}

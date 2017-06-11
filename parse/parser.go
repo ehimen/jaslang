@@ -9,7 +9,6 @@ import (
 
 	"github.com/ehimen/jaslang/dfa"
 	"github.com/ehimen/jaslang/lex"
-	"github.com/ehimen/jaslang/operations"
 )
 
 type Parser interface {
@@ -23,7 +22,7 @@ type parser struct {
 	next           lex.Lexeme
 	nodeStack      []ContainsChildren
 	statementStack []Statement
-	operators      *operations.Register
+	operators      *Register
 	ast            *RootNode
 }
 
@@ -47,11 +46,11 @@ func (err InvalidNumberError) Error() string {
 var UnterminatedStatement = errors.New("Unterminated statement!")
 
 func NewParser(lexer lex.Lexer) Parser {
-	parser := parser{lexer: lexer, operators: operations.NewRegister()}
+	parser := parser{lexer: lexer, operators: NewRegister()}
 
-	parser.operators.Register(operations.Sum{})
-	parser.operators.Register(operations.Subtract{})
-	parser.operators.Register(operations.Multiply{})
+	parser.operators.Register(Sum{})
+	parser.operators.Register(Subtract{})
+	parser.operators.Register(Multiply{})
 
 	machine, err := buildDfa(&parser)
 
