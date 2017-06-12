@@ -1,0 +1,32 @@
+<!Hello world
+<<<CODE
+println("Hello world!");
+<<<INPUT
+<<<ERROR
+<<<OUTPUT
+Hello world!
+
+<!Addition
+<<<CODE
+println(3 + 4);
+<<<OUTPUT
+7.000
+
+<!String cat
+<<<CODE
+println("hello" + "world");
+<<<OUTPUT
+helloworld
+
+<!Subtraction
+<<<CODE
+println(4 - 3);
+<<<OUTPUT
+1.000
+
+
+<!More Subtraction
+<<<CODE
+println(4 - 3 + 21 - 14);
+<<<OUTPUT
+8.000

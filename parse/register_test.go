@@ -1,9 +1,9 @@
-package operations_test
+package parse_test
 
 import (
 	"testing"
 
-	"github.com/ehimen/jaslang/operations"
+	"github.com/ehimen/jaslang/parse"
 )
 
 type test_operation struct {
@@ -19,14 +19,14 @@ func (o *test_operation) Precedence() int {
 	return o.precedence
 }
 
-func operatorWithPrecedence(operator string, precedence int) operations.Operation {
+func operatorWithPrecedence(operator string, precedence int) parse.Operation {
 	return &test_operation{operator: operator, precedence: precedence}
 }
 
 func TestPrecedence(t *testing.T) {
 	cases := []struct {
-		what     operations.Operation
-		over     operations.Operation
+		what     parse.Operation
+		over     parse.Operation
 		expected bool
 	}{
 		{
@@ -52,7 +52,7 @@ func TestPrecedence(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		register := operations.NewRegister()
+		register := parse.NewRegister()
 		register.Register(test.what)
 		register.Register(test.over)
 
@@ -71,19 +71,19 @@ func TestPrecedence(t *testing.T) {
 }
 
 func TestPrecedenceThrowsWhenInvalidOperator(t *testing.T) {
-	register := operations.NewRegister()
+	register := parse.NewRegister()
 
 	register.Register(operatorWithPrecedence("+", 0))
 
 	_, err := register.TakesPrecedence("+", "-")
 
-	if _, isError := err.(operations.UnknownOperatorError); !isError || err.Error() != "Unknown operator: -" {
+	if _, isError := err.(parse.UnknownOperatorError); !isError || err.Error() != "Unknown operator: -" {
 		t.Errorf("Expected unknown operator error, but got: %v", err)
 	}
 
 	_, err = register.TakesPrecedence("-", "+")
 
-	if _, isError := err.(operations.UnknownOperatorError); !isError || err.Error() != "Unknown operator: -" {
+	if _, isError := err.(parse.UnknownOperatorError); !isError || err.Error() != "Unknown operator: -" {
 		t.Errorf("Expected unknown operator error, but got: %v", err)
 	}
 }

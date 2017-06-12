@@ -1,22 +1,10 @@
-package operations
+package parse
 
 import (
 	"fmt"
 )
 
 // Defines an operation (e.g. +, * etc)
-// For now, this simply defines precedence,
-// but we intend that implementations of this
-// can define the operation itself, and using
-// reflection we can resolve an operator
-// to a function that will actually perform the
-// operation. Reflection _may_ allow us to have
-// different signatures for the same operator,
-// (e.g. "foo" + "bar" vs 1 + 2), but this will
-// need some more thinking, especially around
-// any cross over with functions. To proceed here,
-// we need to flesh out the evaluator more and consider
-// how values are represented and passed to functions.
 type Operation interface {
 	Operator() string
 	Precedence() int
