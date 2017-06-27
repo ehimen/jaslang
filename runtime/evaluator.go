@@ -17,7 +17,7 @@ type evaluator struct {
 	context *Context
 }
 
-func NewEvaluator(input io.Reader, output io.Writer) Evaluator {
+func NewEvaluator(input io.Reader, output io.Writer, error io.Writer) Evaluator {
 	table := NewTable()
 
 	table.AddFunction("println", Println{})
@@ -25,7 +25,7 @@ func NewEvaluator(input io.Reader, output io.Writer) Evaluator {
 	table.AddOperator("-", Types([]Type{TypeNumber, TypeNumber}), SubtractNumbers{})
 	table.AddOperator("+", Types([]Type{TypeString, TypeString}), StringConcatenation{})
 
-	return &evaluator{context: &Context{Table: table, Input: input, Output: output}}
+	return &evaluator{context: &Context{Table: table, Input: input, Output: output, Error: error}}
 }
 
 func (e *evaluator) Evaluate(node parse.Node) error {
@@ -78,6 +78,15 @@ func (e *evaluator) evaluate(node parse.Node) (error, Value) {
 
 	if operator, isOperator := node.(*parse.Operator); isOperator {
 		return e.evaluateOperator(operator, args)
+	}
+
+	// Nothing to do with statements/root as these are AST constructs (for now).
+	if _, isStmt := node.(*parse.Statement); isStmt {
+		return nil, nil
+	}
+
+	if _, isRoot := node.(parse.RootNode); isRoot {
+		return nil, nil
 	}
 
 	return errors.New(fmt.Sprintf("Handling for %#v not yet implemented.", node)), nil

@@ -1,8 +1,6 @@
 <!Hello world
 <<<CODE
 println("Hello world!");
-<<<INPUT
-<<<ERROR
 <<<OUTPUT
 Hello world!
 
@@ -24,9 +22,14 @@ println(4 - 3);
 <<<OUTPUT
 1.000
 
-
 <!More Subtraction
 <<<CODE
 println(4 - 3 + 21 - 14);
 <<<OUTPUT
 8.000
+
+<!Invalid operands
+<<<CODE
+println(4 + "hello");
+<<<ERROR
+Unknown operator + with operands (number, string)

@@ -38,11 +38,11 @@ type UnknownOperator struct {
 func (err UnknownOperator) Error() string {
 	operandDescription := []string{}
 
-	for operand := range err.operands {
+	for _, operand := range err.operands {
 		operandDescription = append(operandDescription, string(operand))
 	}
 
-	return fmt.Sprintf("Unknown operator: %s (%s)", err.operator, strings.Join(operandDescription, ", "))
+	return fmt.Sprintf("Unknown operator %s with operands (%s)", err.operator, strings.Join(operandDescription, ", "))
 }
 
 func NewTable() *SymbolTable {
@@ -64,7 +64,7 @@ func (table *SymbolTable) Operator(operator string, operands Types) (Invokable, 
 		}
 	}
 
-	return nil, UnknownOperator{operator: operator}
+	return nil, UnknownOperator{operator: operator, operands: operands}
 }
 
 func (table *SymbolTable) Invokable(identifier string) (Invokable, error) {

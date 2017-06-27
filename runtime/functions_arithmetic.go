@@ -6,7 +6,7 @@ type AddNumbers struct {
 }
 
 func (a AddNumbers) String() string {
-	return "addition <native>"
+	return "addition() <native>"
 }
 
 func (a AddNumbers) Type() Type {
@@ -27,7 +27,7 @@ type SubtractNumbers struct {
 }
 
 func (a SubtractNumbers) String() string {
-	return "subtraction <native>"
+	return "subtraction() <native>"
 }
 
 func (a SubtractNumbers) Type() Type {
