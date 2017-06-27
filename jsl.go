@@ -6,17 +6,39 @@ import (
 
 	"fmt"
 
+	"flag"
+
+	"os"
+
+	"bufio"
+
+	"log"
+
 	"github.com/ehimen/jaslang/run"
 )
 
 func main() {
-	code := strings.NewReader(`println(1 + 2);`)
-	input := strings.NewReader("")
-	output := bytes.NewBufferString("")
+	flag.Parse()
 
-	if err := run.Interpret(code, input, output); err != nil {
-		fmt.Printf("%v\n", err)
+	file := flag.Arg(0)
+
+	if len(file) == 0 {
+		log.Fatal("Must specify jaslang source file (.jsl)")
 	}
 
-	fmt.Println(output.String())
+	if f, err := os.Open(file); err != nil {
+		log.Fatal(err)
+	} else {
+		code := bufio.NewReader(f)
+
+		input := strings.NewReader("")
+		output := bytes.NewBufferString("")
+		outputError := bytes.NewBufferString("")
+
+		if run.Interpret(code, input, output, outputError) {
+			log.Fatal(fmt.Sprintf("%v\n", outputError.String()))
+		} else {
+			fmt.Println(output.String())
+		}
+	}
 }
