@@ -48,9 +48,10 @@ var UnterminatedStatement = errors.New("Unterminated statement!")
 func NewParser(lexer lex.Lexer) Parser {
 	parser := parser{lexer: lexer, operators: NewRegister()}
 
-	parser.operators.Register(Sum{})
-	parser.operators.Register(Subtract{})
-	parser.operators.Register(Multiply{})
+	parser.operators.Register("+", 0)
+	parser.operators.Register("-", 0)
+	parser.operators.Register("*", 1)
+	parser.operators.Register("/", 1)
 
 	machine, err := buildDfa(&parser)
 

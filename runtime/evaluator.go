@@ -23,6 +23,8 @@ func NewEvaluator(input io.Reader, output io.Writer, error io.Writer) Evaluator 
 	table.AddFunction("println", Println{})
 	table.AddOperator("+", Types([]Type{TypeNumber, TypeNumber}), AddNumbers{})
 	table.AddOperator("-", Types([]Type{TypeNumber, TypeNumber}), SubtractNumbers{})
+	table.AddOperator("*", Types([]Type{TypeNumber, TypeNumber}), MultiplyNumbers{})
+	table.AddOperator("/", Types([]Type{TypeNumber, TypeNumber}), DivideNumbers{})
 	table.AddOperator("+", Types([]Type{TypeString, TypeString}), StringConcatenation{})
 
 	return &evaluator{context: &Context{Table: table, Input: input, Output: output, Error: error}}

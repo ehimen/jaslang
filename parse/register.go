@@ -4,14 +4,8 @@ import (
 	"fmt"
 )
 
-// Defines an operation (e.g. +, * etc)
-type Operation interface {
-	Operator() string
-	Precedence() int
-}
-
 type Register struct {
-	operations map[string]Operation
+	operations map[string]int
 }
 
 type UnknownOperatorError struct {
@@ -23,11 +17,11 @@ func (err UnknownOperatorError) Error() string {
 }
 
 func NewRegister() *Register {
-	return &Register{operations: make(map[string]Operation)}
+	return &Register{operations: make(map[string]int)}
 }
 
-func (r *Register) Register(operation Operation) error {
-	r.operations[operation.Operator()] = operation
+func (r *Register) Register(operator string, precedence int) error {
+	r.operations[operator] = precedence
 
 	return nil
 }
@@ -37,11 +31,11 @@ func (r *Register) Register(operation Operation) error {
 // If either operator is unknown to this register,
 // this will return false.
 func (r *Register) TakesPrecedence(what string, over string) (bool, error) {
-	if whatOperator, exists := r.operations[what]; !exists {
+	if whatPrecedence, exists := r.operations[what]; !exists {
 		return false, UnknownOperatorError{operator: what}
-	} else if overOperator, exists := r.operations[over]; !exists {
+	} else if overPrecedence, exists := r.operations[over]; !exists {
 		return false, UnknownOperatorError{operator: over}
 	} else {
-		return whatOperator.Precedence() > overOperator.Precedence(), nil
+		return whatPrecedence > overPrecedence, nil
 	}
 }
