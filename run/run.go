@@ -9,8 +9,6 @@ import (
 )
 
 func Interpret(code io.RuneReader, input io.Reader, output io.Writer, error io.Writer) bool {
-	// TODO: should accept error writer here to allow writing
-	// TODO: to stdout, rather than having to pass Go errors.
 	parser := parse.NewParser(lex.NewJslLexer(code))
 
 	if ast, err := parser.Parse(); err != nil {
