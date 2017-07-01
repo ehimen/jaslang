@@ -19,14 +19,14 @@ func (o *test_operation) Precedence() int {
 	return o.precedence
 }
 
-func operatorWithPrecedence(operator string, precedence int) parse.Operation {
+func operatorWithPrecedence(operator string, precedence int) *test_operation {
 	return &test_operation{operator: operator, precedence: precedence}
 }
 
 func TestPrecedence(t *testing.T) {
 	cases := []struct {
-		what     parse.Operation
-		over     parse.Operation
+		what     *test_operation
+		over     *test_operation
 		expected bool
 	}{
 		{
@@ -53,8 +53,8 @@ func TestPrecedence(t *testing.T) {
 
 	for _, test := range cases {
 		register := parse.NewRegister()
-		register.Register(test.what)
-		register.Register(test.over)
+		register.Register(test.what.Operator(), test.what.Precedence())
+		register.Register(test.over.Operator(), test.over.Precedence())
 
 		actual, err := register.TakesPrecedence(test.what.Operator(), test.over.Operator())
 
@@ -73,7 +73,7 @@ func TestPrecedence(t *testing.T) {
 func TestPrecedenceThrowsWhenInvalidOperator(t *testing.T) {
 	register := parse.NewRegister()
 
-	register.Register(operatorWithPrecedence("+", 0))
+	register.Register("+", 0)
 
 	_, err := register.TakesPrecedence("+", "-")
 
