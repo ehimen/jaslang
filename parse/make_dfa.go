@@ -91,6 +91,7 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 
 	b.Path(from, number, exprNumber)
 	b.Path(from, identifier, exprIdentifier)
+	b.Path(from, quoted, exprString)
 	b.Path(from, ltrue, exprBoolTrue)
 	b.Path(from, lfalse, exprBoolFalse)
 	b.Path(exprIdentifier, operator, exprOperator)
@@ -109,6 +110,7 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.Path(exprString, parenClose, from)
 	b.Path(exprString, operator, exprOperator)
 	b.Path(exprString, comma, exprComma)
+	b.Path(exprString, returnVia, returnTo)
 	b.Path(exprComma, quoted, exprString)
 	b.Path(exprBoolTrue, returnVia, returnTo)
 	b.Path(exprBoolFalse, returnVia, returnTo)
@@ -119,5 +121,5 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.WhenEntering(exprBoolFalse, p.createBooleanLiteral)
 	b.WhenEntering(exprIdentifier, p.createIdentifier)
 	b.WhenEntering(exprOperator, p.createOperator)
-	b.WhenEntering(exprComma, p.closeNode) // TODO: probably wants to be p.closeArg() which should validate we're in a function call before closing the node
+	b.WhenEntering(exprComma, p.closeArgument)
 }

@@ -20,3 +20,10 @@ let b number = 2;
 println(a + b * 6);
 <<<OUTPUT
 13.000
+
+<!String assignment
+<<<CODE
+let a string = "hello world";
+println(a);
+<<<OUTPUT
+hello world

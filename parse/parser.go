@@ -24,7 +24,6 @@ type parser struct {
 	statementStack []Statement
 	operators      *Register
 	ast            *RootNode
-	argListDepth   int
 }
 
 type UnexpectedTokenError struct {
@@ -52,7 +51,7 @@ func (err InvalidNumberError) Error() string {
 var UnterminatedStatement = errors.New("Unterminated statement!")
 
 func NewParser(lexer lex.Lexer) Parser {
-	parser := parser{lexer: lexer, operators: NewRegister(), argListDepth: 0}
+	parser := parser{lexer: lexer, operators: NewRegister()}
 
 	parser.operators.Register("+", 0)
 	parser.operators.Register("-", 0)
@@ -135,27 +134,10 @@ func (p *parser) consume() (next lex.Lexeme, eof error, lexErr error) {
 
 func (p *parser) createIdentifier() error {
 	if p.next.Type == lex.LParenOpen {
-		p.enterArgList()
 		return p.push(NewFunctionCall(p.current.Value))
 	} else {
 		return p.push(NewIdentifier(p.current.Value))
 	}
-}
-
-func (p *parser) enterArgList() error {
-	p.argListDepth++
-
-	return nil
-}
-
-func (p *parser) exitArgList() error {
-	if p.argListDepth == 0 {
-		return errors.New("Cannot close argument list as one is not open")
-	}
-
-	p.argListDepth--
-
-	return nil
 }
 
 func (p *parser) createStringLiteral() error {
@@ -186,14 +168,24 @@ func (p *parser) createLet() error {
 
 func (p *parser) closeNode() error {
 	if len(p.nodeStack) > 0 {
-		context := getContext(p)
-
-		if _, isFunctionCall := context.(*FunctionCall); isFunctionCall {
-			p.exitArgList()
-		}
-
 		p.nodeStack = p.nodeStack[0 : len(p.nodeStack)-1]
 	}
+
+	return nil
+}
+
+func (p *parser) closeArgument() error {
+	containsFunctionCall := p.nodeStackContains(func(node ContainsChildren) bool {
+		_, isFunctionCall := node.(*FunctionCall)
+
+		return isFunctionCall
+	})
+
+	if !containsFunctionCall {
+		return UnexpectedTokenError{Lexeme: p.current}
+	}
+
+	p.closeNode()
 
 	return nil
 }
@@ -362,4 +354,16 @@ func getContext(p *parser) ContainsChildren {
 	}
 
 	return p.nodeStack[len(p.nodeStack)-1]
+}
+
+// Returns true if any node exists in the parser's current
+// stack where the match function returns true
+func (p parser) nodeStackContains(match func(ContainsChildren) bool) bool {
+	for _, node := range p.nodeStack {
+		if match(node) {
+			return true
+		}
+	}
+
+	return false
 }
