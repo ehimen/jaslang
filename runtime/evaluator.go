@@ -20,6 +20,10 @@ type evaluator struct {
 func NewEvaluator(input io.Reader, output io.Writer, error io.Writer) Evaluator {
 	table := NewTable()
 
+	table.AddType("string", TypeString)
+	table.AddType("boolean", TypeBoolean)
+	table.AddType("number", TypeNumber)
+
 	table.AddFunction("println", Println{})
 	table.AddOperator("+", Types([]Type{TypeNumber, TypeNumber}), AddNumbers{})
 	table.AddOperator("-", Types([]Type{TypeNumber, TypeNumber}), SubtractNumbers{})
@@ -92,8 +96,7 @@ func (e *evaluator) evaluate(node parse.Node) (error, Value) {
 	}
 
 	if identifier, isIdentifier := node.(*parse.Identifier); isIdentifier {
-		val, err := e.context.Table.Get(identifier.Identifier)
-		return err, val
+		return e.evaluateIdentifier(identifier, args)
 	}
 
 	if _, isGroup := node.(*parse.Group); isGroup {
@@ -145,7 +148,15 @@ func (e *evaluator) evaluateLet(let *parse.Let, args []Value) (error, Value) {
 		return errors.New("Assignment must be performed with exactly one value"), nil
 	}
 
-	e.context.Table.Set(let.Identifier.Identifier, args[0])
+	if valueType, err := e.context.Table.Type(let.Type.Identifier); err != nil {
+		return err, nil
+	} else {
+		return e.context.Table.Set(let.Identifier.Identifier, args[0], valueType), nil
+	}
+}
 
-	return nil, nil
+func (e *evaluator) evaluateIdentifier(identifier *parse.Identifier, args []Value) (error, Value) {
+	val, err := e.context.Table.Get(identifier.Identifier)
+
+	return err, val
 }
