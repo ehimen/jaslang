@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 
+	"fmt"
+
 	"github.com/ehimen/jaslang/run"
 )
 
@@ -31,8 +33,12 @@ type testCase struct {
 	error  io.Reader
 }
 
+func (t *testCase) isEmpty() bool {
+	return len(t.name) == 0 && t.code == nil && t.output == nil && t.error == nil
+}
+
 func (t *testCase) isValid() bool {
-	return len(t.name) > 0 && t.code != nil && t.output != nil
+	return len(t.name) > 0 && t.code != nil && (t.output != nil || t.error != nil)
 }
 
 func TestJslt(t *testing.T) {
@@ -40,30 +46,63 @@ func TestJslt(t *testing.T) {
 		return
 	} else {
 		for _, test := range tests {
-			runTest(t, test)
+			t.Run(
+				test.name,
+				func(t *testing.T) {
+					actual := bytes.NewBufferString("")
+					actualError := bytes.NewBufferString("")
+
+					encounteredError := run.Interpret(test.code, test.input, actual, actualError)
+
+					fail := func(msg string) {
+						t.Errorf("\"%s\" failed!\n%s", test.name, msg)
+					}
+
+					if test.output != nil {
+						expected, _ := ioutil.ReadAll(test.output)
+
+						if actual.String() != string(expected) {
+							test.code.Seek(0, io.SeekStart)
+							code, _ := ioutil.ReadAll(test.code)
+							fail(fmt.Sprintf(
+								"Expected output:\n%s\nActual output:\n%s\nErrors:\n%s\nInput:\n%s\n",
+								expected,
+								actual.String(),
+								actualError.String(),
+								code,
+							))
+						}
+					} else if len(actual.String()) > 0 {
+						fail(fmt.Sprintf(
+							"Unexpected output: %s",
+							actual.String(),
+						))
+					}
+
+					if test.error == nil && encounteredError {
+						fail(fmt.Sprintf(
+							"Got error output: %s\nExpected none",
+							actualError.String(),
+						))
+					} else if test.error != nil {
+						expectedError, _ := ioutil.ReadAll(test.error)
+
+						if !encounteredError {
+							fail(fmt.Sprintf(
+								"Expected error output: %s\nBut interpreter returned success",
+								expectedError,
+							))
+						} else if string(expectedError) != actualError.String() {
+							fail(fmt.Sprintf(
+								"Expected error output:\n%s\nBut got:\n%s",
+								string(expectedError),
+								actualError.String(),
+							))
+						}
+					}
+				},
+			)
 		}
-	}
-}
-
-func runTest(t *testing.T, test testCase) {
-
-	expected, _ := ioutil.ReadAll(test.output)
-
-	actual := bytes.NewBufferString("")
-
-	err := run.Interpret(test.code, test.input, actual)
-
-	if actual.String() != string(expected) {
-		test.code.Seek(0, io.SeekStart)
-		code, _ := ioutil.ReadAll(test.code)
-		t.Errorf(
-			"\"%s\" failed!\nExpected output:\n%s\nActual output:\n%s\nErrors:\n%s\nCode:\n%s\n",
-			test.name,
-			expected,
-			actual.String(),
-			err,
-			code,
-		)
 	}
 }
 
@@ -147,18 +186,26 @@ func parseFile(path string) ([]testCase, error) {
 		return nil
 	}
 
-	closeTest := func() {
+	closeTest := func() error {
 		closeSection("")
-		if test.isValid() {
-			tests = append(tests, test)
+		if !test.isEmpty() {
+			if test.isValid() {
+				tests = append(tests, test)
+			} else {
+				return errors.New("Invalid test file")
+			}
 		}
 
 		test = testCase{}
+
+		return nil
 	}
 
 	for true {
 		if bytesRead, err := fileReader.ReadString('\n'); err == io.EOF {
-			closeTest()
+			if err := closeTest(); err != nil {
+				return nil, err
+			}
 			break
 		} else if err != nil {
 			return nil, err
@@ -167,7 +214,9 @@ func parseFile(path string) ([]testCase, error) {
 			next := ""
 
 			if strings.HasPrefix(line, prefixTest) {
-				closeTest()
+				if err := closeTest(); err != nil {
+					return nil, err
+				}
 				test.name = line[2 : len(bytesRead)-1]
 				continue
 			} else if strings.HasPrefix(line, prefixInput) {

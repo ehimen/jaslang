@@ -6,11 +6,11 @@ import (
 )
 
 type MachineBuilder interface {
-	Path(string, string, string) error
-	Paths([]string, string, []string) error
+	Path(from string, via string, to string) error
+	Paths(froms []string, via string, tos []string) error
 	WhenEntering(string, func() error) error
-	Accept(string) error
-	Start(string) (Machine, error)
+	Accept(state string) error
+	Start(state string) (Machine, error)
 }
 
 type machineBuilder struct {

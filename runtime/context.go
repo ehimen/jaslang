@@ -8,4 +8,5 @@ type Context struct {
 	Table  *SymbolTable
 	Input  io.Reader
 	Output io.Writer
+	Error  io.Writer
 }

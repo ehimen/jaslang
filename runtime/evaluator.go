@@ -17,15 +17,17 @@ type evaluator struct {
 	context *Context
 }
 
-func NewEvaluator(input io.Reader, output io.Writer) Evaluator {
+func NewEvaluator(input io.Reader, output io.Writer, error io.Writer) Evaluator {
 	table := NewTable()
 
 	table.AddFunction("println", Println{})
 	table.AddOperator("+", Types([]Type{TypeNumber, TypeNumber}), AddNumbers{})
 	table.AddOperator("-", Types([]Type{TypeNumber, TypeNumber}), SubtractNumbers{})
+	table.AddOperator("*", Types([]Type{TypeNumber, TypeNumber}), MultiplyNumbers{})
+	table.AddOperator("/", Types([]Type{TypeNumber, TypeNumber}), DivideNumbers{})
 	table.AddOperator("+", Types([]Type{TypeString, TypeString}), StringConcatenation{})
 
-	return &evaluator{context: &Context{Table: table, Input: input, Output: output}}
+	return &evaluator{context: &Context{Table: table, Input: input, Output: output, Error: error}}
 }
 
 func (e *evaluator) Evaluate(node parse.Node) error {
@@ -80,6 +82,24 @@ func (e *evaluator) evaluate(node parse.Node) (error, Value) {
 		return e.evaluateOperator(operator, args)
 	}
 
+	if let, isLet := node.(*parse.Let); isLet {
+		return e.evaluateLet(let, args)
+	}
+
+	if identifier, isIdentifier := node.(*parse.Identifier); isIdentifier {
+		val, err := e.context.Table.Get(identifier.Identifier)
+		return err, val
+	}
+
+	// Nothing to do with statements/root as these are AST constructs (for now).
+	if _, isStmt := node.(*parse.Statement); isStmt {
+		return nil, nil
+	}
+
+	if _, isRoot := node.(parse.RootNode); isRoot {
+		return nil, nil
+	}
+
 	return errors.New(fmt.Sprintf("Handling for %#v not yet implemented.", node)), nil
 }
 
@@ -105,4 +125,14 @@ func (e *evaluator) evaluateOperator(operator *parse.Operator, args []Value) (er
 	} else {
 		return invokable.Invoke(e.context, args)
 	}
+}
+
+func (e *evaluator) evaluateLet(let *parse.Let, args []Value) (error, Value) {
+	if len(args) != 1 {
+		return errors.New("Assignment must be performed with exactly one value"), nil
+	}
+
+	e.context.Table.Set(let.Identifier.Identifier, args[0])
+
+	return nil, nil
 }

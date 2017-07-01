@@ -12,11 +12,11 @@ import (
 
 func TestSimpleFunctionCall(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("print", lex.LIdentifier, 1),
-		testutil.MakeLexeme("(", lex.LParenOpen, 2),
-		testutil.MakeLexeme("Hello, world!", lex.LQuoted, 3),
-		testutil.MakeLexeme(")", lex.LParenClose, 4),
-		testutil.MakeLexeme(";", lex.LSemiColon, 5),
+		testutil.MakeLexeme("print", lex.LIdentifier, 1, 1),
+		testutil.MakeLexeme("(", lex.LParenOpen, 2, 1),
+		testutil.MakeLexeme("Hello, world!", lex.LQuoted, 3, 1),
+		testutil.MakeLexeme(")", lex.LParenClose, 4, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 5, 1),
 	})
 
 	expected := expectStatements(
@@ -33,11 +33,11 @@ func TestSimpleFunctionCall(t *testing.T) {
 
 func TestTwoLiterals(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("1.34", lex.LNumber, 1),
-		testutil.MakeLexeme(";", lex.LSemiColon, 2),
-		testutil.MakeLexeme(" ", lex.LWhitespace, 3),
-		testutil.MakeLexeme("3.42", lex.LNumber, 4),
-		testutil.MakeLexeme(";", lex.LSemiColon, 5),
+		testutil.MakeLexeme("1.34", lex.LNumber, 1, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 2, 1),
+		testutil.MakeLexeme(" ", lex.LWhitespace, 3, 1),
+		testutil.MakeLexeme("3.42", lex.LNumber, 4, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 5, 1),
 	})
 
 	expected := expectStatements(
@@ -50,7 +50,7 @@ func TestTwoLiterals(t *testing.T) {
 
 func TestInvalidNumberSyntax(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("1.3.2.2.422", lex.LNumber, 1),
+		testutil.MakeLexeme("1.3.2.2.422", lex.LNumber, 1, 1),
 	})
 
 	_, err := parser.Parse()
@@ -62,7 +62,7 @@ func TestInvalidNumberSyntax(t *testing.T) {
 
 func TestIncompleteInput(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("true", lex.LBoolTrue, 1),
+		testutil.MakeLexeme("true", lex.LBoolTrue, 1, 1),
 	})
 
 	if _, err := parser.Parse(); err != parse.UnterminatedStatement {
@@ -72,11 +72,11 @@ func TestIncompleteInput(t *testing.T) {
 
 func TestTrueFalse(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("true", lex.LBoolTrue, 1),
-		testutil.MakeLexeme(";", lex.LSemiColon, 2),
-		testutil.MakeLexeme(" ", lex.LWhitespace, 3),
-		testutil.MakeLexeme("false", lex.LBoolFalse, 4),
-		testutil.MakeLexeme(";", lex.LSemiColon, 5),
+		testutil.MakeLexeme("true", lex.LBoolTrue, 1, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 2, 1),
+		testutil.MakeLexeme(" ", lex.LWhitespace, 3, 1),
+		testutil.MakeLexeme("false", lex.LBoolFalse, 4, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 5, 1),
 	})
 
 	expected := expectStatements(
@@ -89,10 +89,10 @@ func TestTrueFalse(t *testing.T) {
 
 func TestOperator(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("a", lex.LIdentifier, 1),
-		testutil.MakeLexeme("+", lex.LOperator, 2),
-		testutil.MakeLexeme("b", lex.LIdentifier, 3),
-		testutil.MakeLexeme(";", lex.LSemiColon, 4),
+		testutil.MakeLexeme("a", lex.LIdentifier, 1, 1),
+		testutil.MakeLexeme("+", lex.LOperator, 2, 1),
+		testutil.MakeLexeme("b", lex.LIdentifier, 3, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 4, 1),
 	})
 
 	expected := expectStatements(
@@ -110,12 +110,12 @@ func TestOperator(t *testing.T) {
 
 func TestMultipleOperator(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("a", lex.LIdentifier, 1),
-		testutil.MakeLexeme("+", lex.LOperator, 2),
-		testutil.MakeLexeme("b", lex.LIdentifier, 3),
-		testutil.MakeLexeme("+", lex.LOperator, 4),
-		testutil.MakeLexeme("c", lex.LIdentifier, 5),
-		testutil.MakeLexeme(";", lex.LSemiColon, 6),
+		testutil.MakeLexeme("a", lex.LIdentifier, 1, 1),
+		testutil.MakeLexeme("+", lex.LOperator, 2, 1),
+		testutil.MakeLexeme("b", lex.LIdentifier, 3, 1),
+		testutil.MakeLexeme("+", lex.LOperator, 4, 1),
+		testutil.MakeLexeme("c", lex.LIdentifier, 5, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 6, 1),
 	})
 
 	expected := expectStatements(
@@ -137,12 +137,12 @@ func TestMultipleOperator(t *testing.T) {
 
 func TestLet(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("let", lex.LLet, 1),
-		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
-		testutil.MakeLexeme("number", lex.LIdentifier, 3),
-		testutil.MakeLexeme("=", lex.LEquals, 4),
-		testutil.MakeLexeme("1", lex.LNumber, 5),
-		testutil.MakeLexeme(";", lex.LSemiColon, 6),
+		testutil.MakeLexeme("let", lex.LLet, 1, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2, 1),
+		testutil.MakeLexeme("number", lex.LIdentifier, 3, 1),
+		testutil.MakeLexeme("=", lex.LEquals, 4, 1),
+		testutil.MakeLexeme("1", lex.LNumber, 5, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 6, 1),
 	})
 
 	expected := expectStatements(
@@ -160,16 +160,16 @@ func TestLet(t *testing.T) {
 
 func TestLetWithExpression(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("let", lex.LLet, 1),
-		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
-		testutil.MakeLexeme("number", lex.LIdentifier, 3),
-		testutil.MakeLexeme("=", lex.LEquals, 4),
-		testutil.MakeLexeme("1", lex.LNumber, 5),
-		testutil.MakeLexeme("+", lex.LOperator, 6),
-		testutil.MakeLexeme("2", lex.LNumber, 7),
-		testutil.MakeLexeme("-", lex.LOperator, 8),
-		testutil.MakeLexeme("3", lex.LNumber, 9),
-		testutil.MakeLexeme(";", lex.LSemiColon, 10),
+		testutil.MakeLexeme("let", lex.LLet, 1, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2, 1),
+		testutil.MakeLexeme("number", lex.LIdentifier, 3, 1),
+		testutil.MakeLexeme("=", lex.LEquals, 4, 1),
+		testutil.MakeLexeme("1", lex.LNumber, 5, 1),
+		testutil.MakeLexeme("+", lex.LOperator, 6, 1),
+		testutil.MakeLexeme("2", lex.LNumber, 7, 1),
+		testutil.MakeLexeme("-", lex.LOperator, 8, 1),
+		testutil.MakeLexeme("3", lex.LNumber, 9, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 10, 1),
 	})
 
 	expected := expectStatements(
@@ -195,12 +195,12 @@ func TestLetWithExpression(t *testing.T) {
 
 func TestOperatorPrecedence(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("1", lex.LNumber, 1),
-		testutil.MakeLexeme("*", lex.LOperator, 2),
-		testutil.MakeLexeme("2", lex.LNumber, 3),
-		testutil.MakeLexeme("+", lex.LOperator, 4),
-		testutil.MakeLexeme("3", lex.LNumber, 5),
-		testutil.MakeLexeme(";", lex.LSemiColon, 6),
+		testutil.MakeLexeme("1", lex.LNumber, 1, 1),
+		testutil.MakeLexeme("*", lex.LOperator, 2, 1),
+		testutil.MakeLexeme("2", lex.LNumber, 3, 1),
+		testutil.MakeLexeme("+", lex.LOperator, 4, 1),
+		testutil.MakeLexeme("3", lex.LNumber, 5, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 6, 1),
 	})
 
 	expected := expectStatements(
@@ -222,13 +222,13 @@ func TestOperatorPrecedence(t *testing.T) {
 
 func TestOperatorAndFunction(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("a", lex.LIdentifier, 1),
-		testutil.MakeLexeme("+", lex.LOperator, 2),
-		testutil.MakeLexeme("foo", lex.LIdentifier, 3),
-		testutil.MakeLexeme("(", lex.LParenOpen, 4),
-		testutil.MakeLexeme("b", lex.LIdentifier, 5),
-		testutil.MakeLexeme(")", lex.LParenClose, 6),
-		testutil.MakeLexeme(";", lex.LSemiColon, 7),
+		testutil.MakeLexeme("a", lex.LIdentifier, 1, 1),
+		testutil.MakeLexeme("+", lex.LOperator, 2, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 3, 1),
+		testutil.MakeLexeme("(", lex.LParenOpen, 4, 1),
+		testutil.MakeLexeme("b", lex.LIdentifier, 5, 1),
+		testutil.MakeLexeme(")", lex.LParenClose, 6, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 7, 1),
 	})
 
 	expected := expectStatements(
@@ -249,9 +249,9 @@ func TestOperatorAndFunction(t *testing.T) {
 
 func TestInvalidLetAssigned(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("let", lex.LLet, 1),
-		testutil.MakeLexeme("=", lex.LEquals, 2),
-		testutil.MakeLexeme(";", lex.LSemiColon, 3),
+		testutil.MakeLexeme("let", lex.LLet, 1, 1),
+		testutil.MakeLexeme("=", lex.LEquals, 2, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 3, 1),
 	})
 
 	_, err := parser.Parse()
@@ -259,16 +259,16 @@ func TestInvalidLetAssigned(t *testing.T) {
 	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
 		t.Fatalf("Expected unexpected token error, but got: %v", err)
 	} else {
-		assert.Equal(t, "Unexpected token \"=\" at position 2", unexpectedToken.Error())
+		assert.Equal(t, "Unexpected token \"=\" at position 2, line 1", unexpectedToken.Error())
 	}
 }
 
 func TestInvalidLetWithoutType(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("let", lex.LLet, 1),
-		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
-		testutil.MakeLexeme("=", lex.LEquals, 3),
-		testutil.MakeLexeme(";", lex.LSemiColon, 4),
+		testutil.MakeLexeme("let", lex.LLet, 1, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2, 1),
+		testutil.MakeLexeme("=", lex.LEquals, 3, 1),
+		testutil.MakeLexeme(";", lex.LSemiColon, 4, 1),
 	})
 
 	_, err := parser.Parse()
@@ -276,17 +276,17 @@ func TestInvalidLetWithoutType(t *testing.T) {
 	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
 		t.Fatalf("Expected unexpected token error, but got: %v", err)
 	} else {
-		assert.Equal(t, "Unexpected token \"=\" at position 3", unexpectedToken.Error())
+		assert.Equal(t, "Unexpected token \"=\" at position 3, line 1", unexpectedToken.Error())
 	}
 }
 
 func TestInvalidNestedLet(t *testing.T) {
 	parser := getParser([]lex.Lexeme{
-		testutil.MakeLexeme("let", lex.LLet, 1),
-		testutil.MakeLexeme("foo", lex.LIdentifier, 2),
-		testutil.MakeLexeme("string", lex.LIdentifier, 3),
-		testutil.MakeLexeme("=", lex.LEquals, 4),
-		testutil.MakeLexeme("let", lex.LLet, 5),
+		testutil.MakeLexeme("let", lex.LLet, 1, 1),
+		testutil.MakeLexeme("foo", lex.LIdentifier, 2, 1),
+		testutil.MakeLexeme("string", lex.LIdentifier, 3, 1),
+		testutil.MakeLexeme("=", lex.LEquals, 4, 1),
+		testutil.MakeLexeme("let", lex.LLet, 5, 1),
 	})
 
 	_, err := parser.Parse()
@@ -294,7 +294,7 @@ func TestInvalidNestedLet(t *testing.T) {
 	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
 		t.Fatalf("Expected unexpected token error, but got: %v", err)
 	} else {
-		assert.Equal(t, "Unexpected token \"let\" at position 5", unexpectedToken.Error())
+		assert.Equal(t, "Unexpected token \"let\" at position 5, line 1", unexpectedToken.Error())
 	}
 }
 
@@ -310,7 +310,6 @@ func testParse(p parse.Parser, t *testing.T) parse.RootNode {
 	node, err := p.Parse()
 
 	if err != nil {
-
 		if invalidTokenErr, isInvalidToken := err.(parse.UnexpectedTokenError); isInvalidToken {
 			t.Fatalf("%v, debug: %s", invalidTokenErr, invalidTokenErr.Debug)
 		} else {

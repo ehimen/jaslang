@@ -4,11 +4,12 @@ import (
 	"github.com/ehimen/jaslang/lex"
 )
 
-func MakeLexeme(value string, lexemeType lex.LexemeType, position int) lex.Lexeme {
+func MakeLexeme(value string, lexemeType lex.LexemeType, position int, line int) lex.Lexeme {
 	return lex.Lexeme{
 		Start: position,
 		Type:  lexemeType,
 		Value: value,
+		Line:  line,
 	}
 }
 

@@ -17,11 +17,11 @@ func TestNewJslLexer(t *testing.T) {
 }
 
 func TestUnicode(t *testing.T) {
-	doTestGetNext(t, "ϝЄ", []lex.Lexeme{testutil.MakeLexeme("ϝЄ", lex.LIdentifier, 1)})
+	doTestGetNext(t, "ϝЄ", []lex.Lexeme{testutil.MakeLexeme("ϝЄ", lex.LIdentifier, 1, 1)})
 }
 
 func TestSingleIdentifier(t *testing.T) {
-	doTestGetNext(t, "foobar", []lex.Lexeme{testutil.MakeLexeme("foobar", lex.LIdentifier, 1)})
+	doTestGetNext(t, "foobar", []lex.Lexeme{testutil.MakeLexeme("foobar", lex.LIdentifier, 1, 1)})
 }
 
 func TestIdentifierAndString(t *testing.T) {
@@ -29,8 +29,8 @@ func TestIdentifierAndString(t *testing.T) {
 		t,
 		"foo\"bar\"",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("foo", lex.LIdentifier, 1),
-			testutil.MakeLexeme("bar", lex.LQuoted, 4),
+			testutil.MakeLexeme("foo", lex.LIdentifier, 1, 1),
+			testutil.MakeLexeme("bar", lex.LQuoted, 4, 1),
 		},
 	)
 }
@@ -40,9 +40,9 @@ func TestIdentWsString(t *testing.T) {
 		t,
 		"foo \"bar\"",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("foo", lex.LIdentifier, 1),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 4),
-			testutil.MakeLexeme("bar", lex.LQuoted, 5),
+			testutil.MakeLexeme("foo", lex.LIdentifier, 1, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 4, 1),
+			testutil.MakeLexeme("bar", lex.LQuoted, 5, 1),
 		},
 	)
 }
@@ -52,7 +52,7 @@ func TestOtherQuotedString(t *testing.T) {
 		t,
 		`'bar "foo"'`,
 		[]lex.Lexeme{
-			testutil.MakeLexeme(`bar "foo"`, lex.LQuoted, 1),
+			testutil.MakeLexeme(`bar "foo"`, lex.LQuoted, 1, 1),
 		},
 	)
 }
@@ -62,7 +62,7 @@ func TestOtherOtherQuotedString(t *testing.T) {
 		t,
 		`"bar 'foo'"`,
 		[]lex.Lexeme{
-			testutil.MakeLexeme("bar 'foo'", lex.LQuoted, 1),
+			testutil.MakeLexeme("bar 'foo'", lex.LQuoted, 1, 1),
 		},
 	)
 }
@@ -72,7 +72,7 @@ func TestEscapedQuote(t *testing.T) {
 		t,
 		`"\""`,
 		[]lex.Lexeme{
-			testutil.MakeLexeme(`"`, lex.LQuoted, 1),
+			testutil.MakeLexeme(`"`, lex.LQuoted, 1, 1),
 		},
 	)
 }
@@ -82,7 +82,7 @@ func TestEscapedBackslash(t *testing.T) {
 		t,
 		`"\\"`,
 		[]lex.Lexeme{
-			testutil.MakeLexeme(`\`, lex.LQuoted, 1),
+			testutil.MakeLexeme(`\`, lex.LQuoted, 1, 1),
 		},
 	)
 }
@@ -92,7 +92,7 @@ func TestEscapedOtherQuote(t *testing.T) {
 		t,
 		`"\'"`,
 		[]lex.Lexeme{
-			testutil.MakeLexeme(`\'`, lex.LQuoted, 1),
+			testutil.MakeLexeme(`\'`, lex.LQuoted, 1, 1),
 		},
 	)
 }
@@ -102,7 +102,7 @@ func TestBackslashesAndEscapedQuotes(t *testing.T) {
 		t,
 		`"\\\""`,
 		[]lex.Lexeme{
-			testutil.MakeLexeme(`\"`, lex.LQuoted, 1),
+			testutil.MakeLexeme(`\"`, lex.LQuoted, 1, 1),
 		},
 	)
 }
@@ -121,11 +121,11 @@ func TestCharacterSymbols(t *testing.T) {
 		t,
 		"{}();",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("{", lex.LBraceOpen, 1),
-			testutil.MakeLexeme("}", lex.LBraceClose, 2),
-			testutil.MakeLexeme("(", lex.LParenOpen, 3),
-			testutil.MakeLexeme(")", lex.LParenClose, 4),
-			testutil.MakeLexeme(";", lex.LSemiColon, 5),
+			testutil.MakeLexeme("{", lex.LBraceOpen, 1, 1),
+			testutil.MakeLexeme("}", lex.LBraceClose, 2, 1),
+			testutil.MakeLexeme("(", lex.LParenOpen, 3, 1),
+			testutil.MakeLexeme(")", lex.LParenClose, 4, 1),
+			testutil.MakeLexeme(";", lex.LSemiColon, 5, 1),
 		},
 	)
 }
@@ -135,7 +135,7 @@ func TestNumberSimple(t *testing.T) {
 		t,
 		"1",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("1", lex.LNumber, 1),
+			testutil.MakeLexeme("1", lex.LNumber, 1, 1),
 		},
 	)
 }
@@ -145,8 +145,8 @@ func TestNumbersSigned(t *testing.T) {
 		t,
 		"-1+2",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("-1", lex.LNumber, 1),
-			testutil.MakeLexeme("+2", lex.LNumber, 3),
+			testutil.MakeLexeme("-1", lex.LNumber, 1, 1),
+			testutil.MakeLexeme("+2", lex.LNumber, 3, 1),
 		},
 	)
 }
@@ -156,7 +156,7 @@ func TestDecimal(t *testing.T) {
 		t,
 		"1.34",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("1.34", lex.LNumber, 1),
+			testutil.MakeLexeme("1.34", lex.LNumber, 1, 1),
 		},
 	)
 }
@@ -166,7 +166,7 @@ func TestNegativeDecimal(t *testing.T) {
 		t,
 		"-1.34",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("-1.34", lex.LNumber, 1),
+			testutil.MakeLexeme("-1.34", lex.LNumber, 1, 1),
 		},
 	)
 }
@@ -176,7 +176,7 @@ func TestSingleSign(t *testing.T) {
 		t,
 		"+",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("+", lex.LOperator, 1),
+			testutil.MakeLexeme("+", lex.LOperator, 1, 1),
 		},
 	)
 }
@@ -186,9 +186,9 @@ func TestMultipleDecimalPoints(t *testing.T) {
 		t,
 		"13.14.24",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("13.14", lex.LNumber, 1),
-			testutil.MakeLexeme(".", lex.LOperator, 6),
-			testutil.MakeLexeme("24", lex.LNumber, 7),
+			testutil.MakeLexeme("13.14", lex.LNumber, 1, 1),
+			testutil.MakeLexeme(".", lex.LOperator, 6, 1),
+			testutil.MakeLexeme("24", lex.LNumber, 7, 1),
 		},
 	)
 }
@@ -198,9 +198,9 @@ func TestSingleWidthOperators(t *testing.T) {
 		t,
 		"+ -",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("+", lex.LOperator, 1),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 2),
-			testutil.MakeLexeme("-", lex.LOperator, 3),
+			testutil.MakeLexeme("+", lex.LOperator, 1, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 2, 1),
+			testutil.MakeLexeme("-", lex.LOperator, 3, 1),
 		},
 	)
 }
@@ -210,8 +210,8 @@ func TestOperatorOverIdentifier(t *testing.T) {
 		t,
 		"+foo",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("+", lex.LOperator, 1),
-			testutil.MakeLexeme("foo", lex.LIdentifier, 2),
+			testutil.MakeLexeme("+", lex.LOperator, 1, 1),
+			testutil.MakeLexeme("foo", lex.LIdentifier, 2, 1),
 		},
 	)
 }
@@ -221,10 +221,10 @@ func TestFunctionCall(t *testing.T) {
 		t,
 		"foo(bar)",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("foo", lex.LIdentifier, 1),
-			testutil.MakeLexeme("(", lex.LParenOpen, 4),
-			testutil.MakeLexeme("bar", lex.LIdentifier, 5),
-			testutil.MakeLexeme(")", lex.LParenClose, 8),
+			testutil.MakeLexeme("foo", lex.LIdentifier, 1, 1),
+			testutil.MakeLexeme("(", lex.LParenOpen, 4, 1),
+			testutil.MakeLexeme("bar", lex.LIdentifier, 5, 1),
+			testutil.MakeLexeme(")", lex.LParenClose, 8, 1),
 		},
 	)
 }
@@ -234,17 +234,17 @@ func TestIf(t *testing.T) {
 		t,
 		"if(){}elseif{}else{}",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("if", lex.LIf, 1),
-			testutil.MakeLexeme("(", lex.LParenOpen, 3),
-			testutil.MakeLexeme(")", lex.LParenClose, 4),
-			testutil.MakeLexeme("{", lex.LBraceOpen, 5),
-			testutil.MakeLexeme("}", lex.LBraceClose, 6),
-			testutil.MakeLexeme("elseif", lex.LElseIf, 7),
-			testutil.MakeLexeme("{", lex.LBraceOpen, 13),
-			testutil.MakeLexeme("}", lex.LBraceClose, 14),
-			testutil.MakeLexeme("else", lex.LElse, 15),
-			testutil.MakeLexeme("{", lex.LBraceOpen, 19),
-			testutil.MakeLexeme("}", lex.LBraceClose, 20),
+			testutil.MakeLexeme("if", lex.LIf, 1, 1),
+			testutil.MakeLexeme("(", lex.LParenOpen, 3, 1),
+			testutil.MakeLexeme(")", lex.LParenClose, 4, 1),
+			testutil.MakeLexeme("{", lex.LBraceOpen, 5, 1),
+			testutil.MakeLexeme("}", lex.LBraceClose, 6, 1),
+			testutil.MakeLexeme("elseif", lex.LElseIf, 7, 1),
+			testutil.MakeLexeme("{", lex.LBraceOpen, 13, 1),
+			testutil.MakeLexeme("}", lex.LBraceClose, 14, 1),
+			testutil.MakeLexeme("else", lex.LElse, 15, 1),
+			testutil.MakeLexeme("{", lex.LBraceOpen, 19, 1),
+			testutil.MakeLexeme("}", lex.LBraceClose, 20, 1),
 		},
 	)
 }
@@ -254,13 +254,13 @@ func TestLet(t *testing.T) {
 		t,
 		"let a = 1",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("let", lex.LLet, 1),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 4),
-			testutil.MakeLexeme("a", lex.LIdentifier, 5),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 6),
-			testutil.MakeLexeme("=", lex.LEquals, 7),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 8),
-			testutil.MakeLexeme("1", lex.LNumber, 9),
+			testutil.MakeLexeme("let", lex.LLet, 1, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 4, 1),
+			testutil.MakeLexeme("a", lex.LIdentifier, 5, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 6, 1),
+			testutil.MakeLexeme("=", lex.LEquals, 7, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 8, 1),
+			testutil.MakeLexeme("1", lex.LNumber, 9, 1),
 		},
 	)
 }
@@ -270,11 +270,11 @@ func TestWhile(t *testing.T) {
 		t,
 		"while(){}",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("while", lex.LWhile, 1),
-			testutil.MakeLexeme("(", lex.LParenOpen, 6),
-			testutil.MakeLexeme(")", lex.LParenClose, 7),
-			testutil.MakeLexeme("{", lex.LBraceOpen, 8),
-			testutil.MakeLexeme("}", lex.LBraceClose, 9),
+			testutil.MakeLexeme("while", lex.LWhile, 1, 1),
+			testutil.MakeLexeme("(", lex.LParenOpen, 6, 1),
+			testutil.MakeLexeme(")", lex.LParenClose, 7, 1),
+			testutil.MakeLexeme("{", lex.LBraceOpen, 8, 1),
+			testutil.MakeLexeme("}", lex.LBraceClose, 9, 1),
 		},
 	)
 }
@@ -284,13 +284,13 @@ func TestBoolValues(t *testing.T) {
 		t,
 		"true false TRUE FALSE",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("true", lex.LBoolTrue, 1),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 5),
-			testutil.MakeLexeme("false", lex.LBoolFalse, 6),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 11),
-			testutil.MakeLexeme("TRUE", lex.LBoolTrue, 12),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 16),
-			testutil.MakeLexeme("FALSE", lex.LBoolFalse, 17),
+			testutil.MakeLexeme("true", lex.LBoolTrue, 1, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 5, 1),
+			testutil.MakeLexeme("false", lex.LBoolFalse, 6, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 11, 1),
+			testutil.MakeLexeme("TRUE", lex.LBoolTrue, 12, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 16, 1),
+			testutil.MakeLexeme("FALSE", lex.LBoolFalse, 17, 1),
 		},
 	)
 }
@@ -300,7 +300,7 @@ func TestMultipleWhitespace(t *testing.T) {
 		t,
 		" \t\n",
 		[]lex.Lexeme{
-			testutil.MakeLexeme(" \t\n", lex.LWhitespace, 1),
+			testutil.MakeLexeme(" \t\n", lex.LWhitespace, 1, 1),
 		},
 	)
 }
@@ -310,7 +310,7 @@ func TestIdentifierWithSpecialPrefix(t *testing.T) {
 		t,
 		"iffoo",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("iffoo", lex.LIdentifier, 1),
+			testutil.MakeLexeme("iffoo", lex.LIdentifier, 1, 1),
 		},
 	)
 }
@@ -320,9 +320,9 @@ func TestOperatorBetweenIdentifiers(t *testing.T) {
 		t,
 		"foo+bar",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("foo", lex.LIdentifier, 1),
-			testutil.MakeLexeme("+", lex.LOperator, 4),
-			testutil.MakeLexeme("bar", lex.LIdentifier, 5),
+			testutil.MakeLexeme("foo", lex.LIdentifier, 1, 1),
+			testutil.MakeLexeme("+", lex.LOperator, 4, 1),
+			testutil.MakeLexeme("bar", lex.LIdentifier, 5, 1),
 		},
 	)
 }
@@ -332,9 +332,9 @@ func TestNotSingleOperatorBetweenIdentifiers(t *testing.T) {
 		t,
 		"foo++bar",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("foo", lex.LIdentifier, 1),
-			testutil.MakeLexeme("++", lex.LOperator, 4),
-			testutil.MakeLexeme("bar", lex.LIdentifier, 6),
+			testutil.MakeLexeme("foo", lex.LIdentifier, 1, 1),
+			testutil.MakeLexeme("++", lex.LOperator, 4, 1),
+			testutil.MakeLexeme("bar", lex.LIdentifier, 6, 1),
 		},
 	)
 }
@@ -344,13 +344,13 @@ func TestFunctionDeclaration(t *testing.T) {
 		t,
 		"() => {}",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("(", lex.LParenOpen, 1),
-			testutil.MakeLexeme(")", lex.LParenClose, 2),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 3),
-			testutil.MakeLexeme("=>", lex.LOperator, 4),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 6),
-			testutil.MakeLexeme("{", lex.LBraceOpen, 7),
-			testutil.MakeLexeme("}", lex.LBraceClose, 8),
+			testutil.MakeLexeme("(", lex.LParenOpen, 1, 1),
+			testutil.MakeLexeme(")", lex.LParenClose, 2, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 3, 1),
+			testutil.MakeLexeme("=>", lex.LOperator, 4, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 6, 1),
+			testutil.MakeLexeme("{", lex.LBraceOpen, 7, 1),
+			testutil.MakeLexeme("}", lex.LBraceClose, 8, 1),
 		},
 	)
 }
@@ -360,9 +360,9 @@ func TestGte(t *testing.T) {
 		t,
 		"3>=4",
 		[]lex.Lexeme{
-			testutil.MakeLexeme("3", lex.LNumber, 1),
-			testutil.MakeLexeme(">=", lex.LOperator, 2),
-			testutil.MakeLexeme("4", lex.LNumber, 4),
+			testutil.MakeLexeme("3", lex.LNumber, 1, 1),
+			testutil.MakeLexeme(">=", lex.LOperator, 2, 1),
+			testutil.MakeLexeme("4", lex.LNumber, 4, 1),
 		},
 	)
 }
@@ -376,27 +376,27 @@ let total number = 0;`
 		t,
 		code,
 		[]lex.Lexeme{
-			testutil.MakeLexeme("let", lex.LLet, 1),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 4),
-			testutil.MakeLexeme("n", lex.LIdentifier, 5),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 6),
-			testutil.MakeLexeme("number", lex.LIdentifier, 7),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 13),
-			testutil.MakeLexeme("=", lex.LEquals, 14),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 15),
-			testutil.MakeLexeme("4", lex.LNumber, 16),
-			testutil.MakeLexeme(";", lex.LSemiColon, 17),
-			testutil.MakeLexeme("\n", lex.LWhitespace, 18),
-			testutil.MakeLexeme("let", lex.LLet, 19),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 22),
-			testutil.MakeLexeme("total", lex.LIdentifier, 23),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 28),
-			testutil.MakeLexeme("number", lex.LIdentifier, 29),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 35),
-			testutil.MakeLexeme("=", lex.LEquals, 36),
-			testutil.MakeLexeme(" ", lex.LWhitespace, 37),
-			testutil.MakeLexeme("0", lex.LNumber, 38),
-			testutil.MakeLexeme(";", lex.LSemiColon, 39),
+			testutil.MakeLexeme("let", lex.LLet, 1, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 4, 1),
+			testutil.MakeLexeme("n", lex.LIdentifier, 5, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 6, 1),
+			testutil.MakeLexeme("number", lex.LIdentifier, 7, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 13, 1),
+			testutil.MakeLexeme("=", lex.LEquals, 14, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 15, 1),
+			testutil.MakeLexeme("4", lex.LNumber, 16, 1),
+			testutil.MakeLexeme(";", lex.LSemiColon, 17, 1),
+			testutil.MakeLexeme("\n", lex.LWhitespace, 18, 1),
+			testutil.MakeLexeme("let", lex.LLet, 1, 2),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 4, 2),
+			testutil.MakeLexeme("total", lex.LIdentifier, 5, 2),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 10, 2),
+			testutil.MakeLexeme("number", lex.LIdentifier, 11, 2),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 17, 2),
+			testutil.MakeLexeme("=", lex.LEquals, 18, 2),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 19, 2),
+			testutil.MakeLexeme("0", lex.LNumber, 20, 2),
+			testutil.MakeLexeme(";", lex.LSemiColon, 21, 2),
 		},
 	)
 }

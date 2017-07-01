@@ -1,11 +1,3 @@
-<!Hello world
-<<<CODE
-println("Hello world!");
-<<<INPUT
-<<<ERROR
-<<<OUTPUT
-Hello world!
-
 <!Addition
 <<<CODE
 println(3 + 4);
@@ -24,9 +16,26 @@ println(4 - 3);
 <<<OUTPUT
 1.000
 
-
 <!More Subtraction
 <<<CODE
 println(4 - 3 + 21 - 14);
 <<<OUTPUT
 8.000
+
+<!Multiplication
+<<<CODE
+println(4 * 13);
+<<<OUTPUT
+52.000
+
+<!Division
+<<<CODE
+println(12 / 5);
+<<<OUTPUT
+2.400
+
+<!Chained arithmetic
+<<<CODE
+println(12 + 3 / 4 * 13 - 2 + 4);
+<<<OUTPUT
+23.750

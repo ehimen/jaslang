@@ -5,11 +5,25 @@ import (
 	"strings"
 )
 
+type runePosition struct {
+	line   int
+	column int
+}
+
+func (pos *runePosition) inc(char string) {
+	if char == "\n" {
+		pos.line++
+		pos.column = 1
+	} else {
+		pos.column++
+	}
+}
+
 type jslLexer struct {
 	reader      io.RuneReader
 	ch          chan Lexeme
-	position    int
-	start       int
+	position    runePosition
+	start       runePosition
 	fn          stateFunction
 	current     string
 	err         error
@@ -19,15 +33,15 @@ type jslLexer struct {
 
 func NewJslLexer(reader io.RuneReader) Lexer {
 	return &jslLexer{
-		reader,
-		make(chan Lexeme, 1),
-		1,
-		1,
-		defaultState,
-		"",
-		nil,
-		make([]string, 2),
-		false,
+		reader:      reader,
+		ch:          make(chan Lexeme, 1),
+		position:    runePosition{1, 1},
+		start:       runePosition{1, 1},
+		fn:          defaultState,
+		current:     "",
+		err:         nil,
+		lookahead:   make([]string, 2),
+		initialised: false,
 	}
 }
 
@@ -70,9 +84,10 @@ func (l *jslLexer) next() string {
 
 	next := l.lookahead[0]
 
-	l.current += next
+	// Move our rune position based on the consumed rune
+	l.position.inc(next)
 
-	l.position++
+	l.current += next
 
 	// Remove the first item and push on the next rune.
 	l.lookahead = l.lookahead[1:]
@@ -120,9 +135,10 @@ func (l *jslLexer) emit(lexemeType LexemeType) {
 	}
 
 	l.ch <- Lexeme{
-		l.start,
-		lexemeType,
-		l.current,
+		Start: l.start.column,
+		Type:  lexemeType,
+		Value: l.current,
+		Line:  l.start.line,
 	}
 
 	l.current = ""
