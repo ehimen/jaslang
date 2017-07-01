@@ -30,19 +30,22 @@ func main() {
 
 	file := flag.Arg(0)
 
+	var input io.RuneReader
+
 	if len(file) == 0 {
-		fail("Must specify jaslang source file (.jsl)")
+		input = bufio.NewReader(os.Stdin)
+	} else {
+		if f, err := os.Open(file); err != nil {
+			log.Fatal(err)
+		} else {
+			input = bufio.NewReader(f)
+		}
 	}
 
-	if f, err := os.Open(file); err != nil {
-		log.Fatal(err)
+	if *ast {
+		printAst(input)
 	} else {
-		input := bufio.NewReader(f)
-		if *ast {
-			printAst(input)
-		} else {
-			execute(input)
-		}
+		execute(input)
 	}
 }
 

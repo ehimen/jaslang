@@ -39,3 +39,15 @@ println(12 / 5);
 println(12 + 3 / 4 * 13 - 2 + 4);
 <<<OUTPUT
 23.750
+
+<!Arithmetic precedence #1
+<<<CODE
+println((12 + 3) / 5);
+<<<OUTPUT
+3.000
+
+<!Arithmetic precedence #2
+<<<CODE
+println((12 + 3) / 4 * ((13 - 2) + 4));
+<<<OUTPUT
+56.250

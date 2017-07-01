@@ -96,6 +96,14 @@ func (e *evaluator) evaluate(node parse.Node) (error, Value) {
 		return err, val
 	}
 
+	if _, isGroup := node.(*parse.Group); isGroup {
+		if len(args) != 1 {
+			return errors.New(fmt.Sprintf("Group should not have more than 1 child, actually has: %d", len(args))), nil
+		}
+
+		return nil, args[0]
+	}
+
 	// Nothing to do with statements/root as these are AST constructs (for now).
 	if _, isStmt := node.(*parse.Statement); isStmt {
 		return nil, nil

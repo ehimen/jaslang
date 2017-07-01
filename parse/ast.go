@@ -235,6 +235,28 @@ func (let Let) MarshalJSON() ([]byte, error) {
 	})
 }
 
+//
+
+//type ContainsChildren interface {
+//	push(child Node) (error, bool)
+//	Children() []Node
+//}
+
+type Group struct {
+	ParentNode
+	//children []Node
+}
+
+func (group Group) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type     string
+		Children []Node
+	}{
+		Type:     "group",
+		Children: group.children,
+	})
+}
+
 func NewStatement(children ...Node) *Statement {
 	return &Statement{ParentNode: ParentNode{children: children}}
 }
@@ -265,4 +287,8 @@ func NewNumber(value float64) *Number {
 
 func NewLet(identifier string, typeIdentifier string, children ...Node) *Let {
 	return &Let{children: children, Identifier: NewIdentifier(identifier), Type: NewIdentifier(typeIdentifier)}
+}
+
+func NewGroup() *Group {
+	return &Group{}
 }

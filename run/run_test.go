@@ -26,11 +26,12 @@ type codeBuffer interface {
 }
 
 type testCase struct {
-	name   string
-	code   codeBuffer
-	output io.Reader
-	input  io.Reader
-	error  io.Reader
+	name     string
+	code     codeBuffer
+	output   io.Reader
+	input    io.Reader
+	error    io.Reader
+	priority bool
 }
 
 func (t *testCase) isEmpty() bool {
@@ -138,6 +139,19 @@ func loadTests(t *testing.T) ([]testCase, bool) {
 		}
 	}
 
+	priorities := []testCase{}
+
+	for _, test := range tests {
+		if test.priority {
+			priorities = append(priorities, test)
+		}
+	}
+
+	if len(priorities) > 0 {
+		t.Log("Running priority .jslt tests only. (See tests marked with: <!!)")
+		return priorities, true
+	}
+
 	return tests, true
 }
 
@@ -153,6 +167,7 @@ func parseFile(path string) ([]testCase, error) {
 	fileReader := bufio.NewReader(file)
 
 	prefixTest := "<!"
+	prefixPriority := "<!!"
 	prefixInput := "<<<INPUT"
 	prefixOutput := "<<<OUTPUT"
 	prefixCode := "<<<CODE"
@@ -188,6 +203,7 @@ func parseFile(path string) ([]testCase, error) {
 
 	closeTest := func() error {
 		closeSection("")
+
 		if !test.isEmpty() {
 			if test.isValid() {
 				tests = append(tests, test)
@@ -218,6 +234,9 @@ func parseFile(path string) ([]testCase, error) {
 					return nil, err
 				}
 				test.name = line[2 : len(bytesRead)-1]
+				if strings.HasPrefix(line, prefixPriority) {
+					test.priority = true
+				}
 				continue
 			} else if strings.HasPrefix(line, prefixInput) {
 				next = prefixInput

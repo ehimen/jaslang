@@ -24,6 +24,7 @@ type parser struct {
 	statementStack []Statement
 	operators      *Register
 	ast            *RootNode
+	openedFunction bool
 }
 
 type UnexpectedTokenError struct {
@@ -51,7 +52,7 @@ func (err InvalidNumberError) Error() string {
 var UnterminatedStatement = errors.New("Unterminated statement!")
 
 func NewParser(lexer lex.Lexer) Parser {
-	parser := parser{lexer: lexer, operators: NewRegister()}
+	parser := parser{lexer: lexer, operators: NewRegister(), openedFunction: false}
 
 	parser.operators.Register("+", 0)
 	parser.operators.Register("-", 0)
@@ -139,6 +140,7 @@ func (p *parser) consume() (next lex.Lexeme, eof error, lexErr error) {
 
 func (p *parser) createIdentifier() error {
 	if p.next.Type == lex.LParenOpen {
+		p.openedFunction = true
 		return p.push(NewFunctionCall(p.current.Value))
 	} else {
 		return p.push(NewIdentifier(p.current.Value))
@@ -179,6 +181,27 @@ func (p *parser) closeNode() error {
 	return nil
 }
 
+// Closes all nodes up the stack, until a group or
+// function call node are reached, which we close
+// before returning.
+func (p *parser) closeGroupOrFunction() error {
+	for len(p.nodeStack) > 0 {
+		context := getContext(p)
+
+		_, isGroup := context.(*Group)
+		_, isFunctionCall := context.(*FunctionCall)
+
+		if isGroup || isFunctionCall {
+			p.closeNode()
+			break
+		} else {
+			p.closeNode()
+		}
+	}
+
+	return nil
+}
+
 func (p *parser) closeArgument() error {
 	containsFunctionCall := p.nodeStackContains(func(node ContainsChildren) bool {
 		_, isFunctionCall := node.(*FunctionCall)
@@ -191,6 +214,22 @@ func (p *parser) closeArgument() error {
 	}
 
 	p.closeNode()
+
+	return nil
+}
+
+// Creates a precedence grouping. I.e.
+// operations enclosed in parentheses.
+// Note this will do nothing if we have just
+// opened a function call (as this isn't a group).
+func (p *parser) createGroup() error {
+	if p.openedFunction {
+		p.openedFunction = false
+
+		return nil
+	}
+
+	p.push(NewGroup())
 
 	return nil
 }
@@ -291,17 +330,25 @@ func (p *parser) push(node Node) error {
 // and replacer has a higher precedence. This ensures that
 // replacer appears lower in the AST, thus it is evaluated
 // first (e.g. "1 + 2 * 3" is "1 + (2 * 3), replacer is *,
-// parent is *).
+// parent is +).
+//
 // Also true when parent's last child and replacer are
 // operators, but replacer does not takes precedence
 // over the last child. Ensures that operators are chained
 // and the first operator lower in the AST, thus evaluated
 // first (e.g. "1 + 2 + 3" is "(1 + 2) + 3", replacer is
 // second +, parent is statement whose last child is first +).
+//
 // Also true when parent's last child does not contain
 // children and our replacer is an operator. Ensures that lone
 // nodes are placed under an operator as an operator (for now)
 // always takes a LHS argument.
+//
+// Also true when parent's last child is a group and the replacer
+// is an operator. This ensures that the group becomes a child
+// of the operator, and that the forced precedence of the group
+// is respected. E.g. (4 + 4) / 2 should have the / operator
+// at the top, with two children: the group 4 + 4 and number 2.
 func (p parser) shouldReplaceLastChildOf(replacer ContainsChildren, parent Adjustable) ContainsChildren {
 
 	// Check operator precedence.
@@ -342,7 +389,11 @@ func (p parser) shouldReplaceLastChildOf(replacer ContainsChildren, parent Adjus
 		}
 	}
 
-	// If our parent's last child is not an operators
+	if _, lastChildIsGroup := lastChild.(*Group); replacerIsOperator && lastChildIsGroup {
+		return replacer
+	}
+
+	// If our parent's last child is not an operator
 	// and does not contain children, and our replacer is an
 	// operator, we should replace.
 	if _, lastChildContainsChildren := lastChild.(ContainsChildren); !lastChildContainsChildren {
