@@ -57,6 +57,11 @@ func NewParser(lexer lex.Lexer) Parser {
 	parser.operators.Register("-", 0)
 	parser.operators.Register("*", 1)
 	parser.operators.Register("/", 1)
+	parser.operators.Register("&&", 0)
+	parser.operators.Register("||", 0)
+	parser.operators.Register(">", 1)
+	parser.operators.Register("<", 1)
+	parser.operators.Register("==", 1)
 
 	machine, err := buildDfa(&parser)
 

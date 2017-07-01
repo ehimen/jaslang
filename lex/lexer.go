@@ -36,7 +36,7 @@ const (
 	LEquals     LexemeType = "="
 	LComma      LexemeType = ","
 
-	OperatorSymbols   string = "+-.^*&/|=>!"
+	OperatorSymbols   string = "+-.^*&/|=><!"
 	SpecialCharacters string = "{}();,"
 )
 
