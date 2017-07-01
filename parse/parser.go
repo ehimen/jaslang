@@ -167,7 +167,26 @@ func (p *parser) createLet() error {
 }
 
 func (p *parser) closeNode() error {
-	p.nodeStack = p.nodeStack[0 : len(p.nodeStack)-1]
+	if len(p.nodeStack) > 0 {
+		p.nodeStack = p.nodeStack[0 : len(p.nodeStack)-1]
+	}
+
+	return nil
+}
+
+// Closes all open nodes up the stack
+// until we close a statement node.
+func (p *parser) closeStatement() error {
+	context := getContext(p)
+
+	for _, isStatement := context.(*Statement); !isStatement && len(p.nodeStack) > 1; {
+		// Close while the head of the stack isn't a statement.
+		//println("Closing because not statement")
+		p.closeNode()
+	}
+
+	// Close one more time. This closes the statement
+	p.closeNode()
 
 	return nil
 }
@@ -312,6 +331,7 @@ func (p parser) shouldReplaceLastChildOf(replacer ContainsChildren, parent Adjus
 	return nil
 }
 
+// Gets the current head of the node stack.
 func getContext(p *parser) ContainsChildren {
 	if len(p.nodeStack) == 0 {
 		return nil

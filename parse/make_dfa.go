@@ -26,19 +26,19 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.Path(start, ltrue, ltrue)
 	builder.Path(start, lfalse, lfalse)
 	builder.Path(start, let, let)
-	builder.Path(start, term, term)
+	builder.Path(start, term, start)
 
-	buildExpr(p, builder, "", start, term, term)
-	buildExpr(p, builder, "term", term, term, term)
+	buildExpr(p, builder, "", start, term, start)
+	//buildExpr(p, builder, "term", term, term, term)
 
-	builder.Path(quoted, term, term)
+	builder.Path(quoted, term, start)
 	builder.Path(quoted, parenClose, parenClose)
 
-	builder.Path(number, term, term)
+	builder.Path(number, term, start)
 
-	builder.Path(ltrue, term, term)
+	builder.Path(ltrue, term, start)
 
-	builder.Path(lfalse, term, term)
+	builder.Path(lfalse, term, start)
 
 	builder.Path(term, number, number)
 	builder.Path(term, quoted, quoted)
@@ -48,20 +48,20 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.Path(let, identifier, "let-identifier")
 	builder.Path("let-identifier", identifier, "let-type-identifier")
 	builder.Path("let-type-identifier", equals, "let-equals")
-	buildExpr(p, builder, "let", "let-equals", term, term)
+	buildExpr(p, builder, "let", "let-equals", term, start)
 	builder.WhenEntering("let-identifier", p.createIdentifier)
 	builder.WhenEntering("let-type-identifier", p.createIdentifier)
 
 	builder.WhenEntering(quoted, p.createStringLiteral)
 	builder.WhenEntering(parenClose, p.closeNode)
-	builder.WhenEntering(term, p.closeNode)
+	builder.WhenEntering(start, p.closeStatement)
 	builder.WhenEntering(number, p.createNumberLiteral)
 	builder.WhenEntering(ltrue, p.createBooleanLiteral)
 	builder.WhenEntering(lfalse, p.createBooleanLiteral)
 	builder.WhenEntering(operator, p.createOperator)
 	builder.WhenEntering(let, p.createLet)
 
-	builder.Accept(term)
+	builder.Accept(start)
 
 	return builder.Start(start)
 }

@@ -57,6 +57,26 @@ func (table *SymbolTable) AddOperator(operator string, operands Types, invokable
 	table.operators = append(table.operators, operatorEntry{operator: operator, operands: operands, operation: invokable})
 }
 
+func (table *SymbolTable) Set(identifier string, value Value) {
+	valueEntry, exists := table.entries[identifier]
+
+	if exists {
+		valueEntry.value = value
+	} else {
+		valueEntry = &entry{identifier: identifier, value: value}
+	}
+
+	table.entries[identifier] = valueEntry
+}
+
+func (table *SymbolTable) Get(identifier string) (Value, error) {
+	if entry, exists := table.entries[identifier]; exists {
+		return entry.value, nil
+	}
+
+	return nil, UnknownIdentifier{identifier: identifier}
+}
+
 func (table *SymbolTable) Operator(operator string, operands Types) (Invokable, error) {
 	for _, candidate := range table.operators {
 		if candidate.operator == operator && operands.Equal(candidate.operands) {

@@ -1,0 +1,14 @@
+<!Assign number
+<<<CODE
+let a number = 13;
+println(a);
+<<<OUTPUT
+13.000
+
+<!Assign multiple numbers
+<<<CODE
+let a number = 13;
+let b number = 14;
+println(a + b);
+<<<OUTPUT
+27.000
