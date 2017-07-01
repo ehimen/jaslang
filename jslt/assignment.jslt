@@ -12,3 +12,11 @@ let b number = 14;
 println(a + b);
 <<<OUTPUT
 27.000
+
+<!Assignments with literals
+<<<CODE
+let a number = 1;
+let b number = 2;
+println(a + b * 6);
+<<<OUTPUT
+13.000

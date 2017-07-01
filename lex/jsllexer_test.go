@@ -401,6 +401,22 @@ let total number = 0;`
 	)
 }
 
+func TestArgumentList(t *testing.T) {
+	doTestGetNext(
+		t,
+		`println("hello", "world")`,
+		[]lex.Lexeme{
+			testutil.MakeLexeme("println", lex.LIdentifier, 1, 1),
+			testutil.MakeLexeme("(", lex.LParenOpen, 8, 1),
+			testutil.MakeLexeme("hello", lex.LQuoted, 9, 1),
+			testutil.MakeLexeme(",", lex.LComma, 16, 1),
+			testutil.MakeLexeme(" ", lex.LWhitespace, 17, 1),
+			testutil.MakeLexeme("world", lex.LQuoted, 18, 1),
+			testutil.MakeLexeme(")", lex.LParenClose, 25, 1),
+		},
+	)
+}
+
 func doTestGetNext(t *testing.T, in string, expected []lex.Lexeme) {
 	assertLexemes(
 		t,

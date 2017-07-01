@@ -34,9 +34,10 @@ const (
 	LBoolTrue   LexemeType = "true"
 	LBoolFalse  LexemeType = "false"
 	LEquals     LexemeType = "="
+	LComma      LexemeType = ","
 
 	OperatorSymbols   string = "+-.^*&/|=>!"
-	SpecialCharacters string = "{}();"
+	SpecialCharacters string = "{}();,"
 )
 
 var Keywords = []LexemeType{LIf, LElse, LElseIf, LLet, LWhile}

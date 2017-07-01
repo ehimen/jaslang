@@ -17,6 +17,7 @@ var lfalse = lex.LBoolFalse.String()
 var operator = lex.LOperator.String()
 var let = lex.LLet.String()
 var equals = lex.LEquals.String()
+var comma = lex.LComma.String()
 
 func buildDfa(p *parser) (dfa.Machine, error) {
 
@@ -86,6 +87,7 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	exprOperator := prefix + lex.LOperator.String()
 	exprIdentifier := prefix + lex.LIdentifier.String()
 	exprParenOpen := prefix + lex.LParenOpen.String()
+	exprComma := prefix + lex.LComma.String()
 
 	b.Path(from, number, exprNumber)
 	b.Path(from, identifier, exprIdentifier)
@@ -106,6 +108,8 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.Path(exprNumber, parenClose, from)
 	b.Path(exprString, parenClose, from)
 	b.Path(exprString, operator, exprOperator)
+	b.Path(exprString, comma, exprComma)
+	b.Path(exprComma, quoted, exprString)
 	b.Path(exprBoolTrue, returnVia, returnTo)
 	b.Path(exprBoolFalse, returnVia, returnTo)
 
@@ -115,4 +119,5 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.WhenEntering(exprBoolFalse, p.createBooleanLiteral)
 	b.WhenEntering(exprIdentifier, p.createIdentifier)
 	b.WhenEntering(exprOperator, p.createOperator)
+	b.WhenEntering(exprComma, p.closeNode) // TODO: probably wants to be p.closeArg() which should validate we're in a function call before closing the node
 }

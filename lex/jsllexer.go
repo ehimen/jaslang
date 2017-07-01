@@ -247,6 +247,8 @@ func characterState(l *jslLexer) (stateFunction, error) {
 		l.emit(LParenClose)
 	case ";":
 		l.emit(LSemiColon)
+	case ",":
+		l.emit(LComma)
 	}
 
 	return defaultState, nil
