@@ -26,6 +26,11 @@ func NewEvaluator(input io.Reader, output io.Writer, error io.Writer) Evaluator 
 	table.AddOperator("*", Types([]Type{TypeNumber, TypeNumber}), MultiplyNumbers{})
 	table.AddOperator("/", Types([]Type{TypeNumber, TypeNumber}), DivideNumbers{})
 	table.AddOperator("+", Types([]Type{TypeString, TypeString}), StringConcatenation{})
+	table.AddOperator("&&", Types([]Type{TypeBoolean, TypeBoolean}), LogicAnd{})
+	table.AddOperator("||", Types([]Type{TypeBoolean, TypeBoolean}), LogicOr{})
+	table.AddOperator("==", Types([]Type{TypeNumber, TypeNumber}), Equality{})
+	table.AddOperator("<", Types([]Type{TypeNumber, TypeNumber}), LessThan{})
+	table.AddOperator(">", Types([]Type{TypeNumber, TypeNumber}), GreaterThan{})
 
 	return &evaluator{context: &Context{Table: table, Input: input, Output: output, Error: error}}
 }

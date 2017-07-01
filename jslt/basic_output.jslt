@@ -10,10 +10,9 @@ println(4 + "hello");
 <<<ERROR
 Unknown operator + with operands (number, string)
 
-<!Multiline syntax error
+<!Multi-arg println
 <<<CODE
-println("hello world");
-
-"foo" "bar";
-<<<ERROR
-Unexpected token "bar" at position 7, line 3
+println("hello", "world");
+<<<OUTPUT
+hello
+world

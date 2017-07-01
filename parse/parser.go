@@ -57,6 +57,11 @@ func NewParser(lexer lex.Lexer) Parser {
 	parser.operators.Register("-", 0)
 	parser.operators.Register("*", 1)
 	parser.operators.Register("/", 1)
+	parser.operators.Register("&&", 0)
+	parser.operators.Register("||", 0)
+	parser.operators.Register(">", 1)
+	parser.operators.Register("<", 1)
+	parser.operators.Register("==", 1)
 
 	machine, err := buildDfa(&parser)
 
@@ -170,6 +175,22 @@ func (p *parser) closeNode() error {
 	if len(p.nodeStack) > 0 {
 		p.nodeStack = p.nodeStack[0 : len(p.nodeStack)-1]
 	}
+
+	return nil
+}
+
+func (p *parser) closeArgument() error {
+	containsFunctionCall := p.nodeStackContains(func(node ContainsChildren) bool {
+		_, isFunctionCall := node.(*FunctionCall)
+
+		return isFunctionCall
+	})
+
+	if !containsFunctionCall {
+		return UnexpectedTokenError{Lexeme: p.current}
+	}
+
+	p.closeNode()
 
 	return nil
 }
@@ -338,4 +359,16 @@ func getContext(p *parser) ContainsChildren {
 	}
 
 	return p.nodeStack[len(p.nodeStack)-1]
+}
+
+// Returns true if any node exists in the parser's current
+// stack where the match function returns true
+func (p parser) nodeStackContains(match func(ContainsChildren) bool) bool {
+	for _, node := range p.nodeStack {
+		if match(node) {
+			return true
+		}
+	}
+
+	return false
 }

@@ -12,3 +12,55 @@ let b number = 14;
 println(a + b);
 <<<OUTPUT
 27.000
+
+<!Assign multiple numbers with expressions
+<<<CODE
+let a number = 13 * 2;
+let b number = 14 / 7;
+println(a - b);
+<<<OUTPUT
+24.000
+
+<!Assignments with literals
+<<<CODE
+let a number = 1;
+let b number = 2;
+println(a + b * 6);
+<<<OUTPUT
+13.000
+
+<!String assignment
+<<<CODE
+let a string = "hello world";
+println(a);
+<<<OUTPUT
+hello world
+
+<!String expression assignment
+<<<CODE
+let str string = "hello" + " " + "world";
+println(str);
+<<<OUTPUT
+hello world
+
+<!Boolean assignment
+<<<CODE
+let b boolean = true;
+println(b);
+<<<OUTPUT
+true
+
+<!Boolean expression assignment
+<<<CODE
+let b boolean = true && false;
+println(b);
+<<<OUTPUT
+false
+
+
+<!Boolean expression assignment with literals
+<<<CODE
+let b boolean = 1 > 3 && 2 < 4 && 3 == 4;
+println(b || true);
+<<<OUTPUT
+true

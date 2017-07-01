@@ -17,6 +17,7 @@ var lfalse = lex.LBoolFalse.String()
 var operator = lex.LOperator.String()
 var let = lex.LLet.String()
 var equals = lex.LEquals.String()
+var comma = lex.LComma.String()
 
 func buildDfa(p *parser) (dfa.Machine, error) {
 
@@ -86,9 +87,11 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	exprOperator := prefix + lex.LOperator.String()
 	exprIdentifier := prefix + lex.LIdentifier.String()
 	exprParenOpen := prefix + lex.LParenOpen.String()
+	exprComma := prefix + lex.LComma.String()
 
 	b.Path(from, number, exprNumber)
 	b.Path(from, identifier, exprIdentifier)
+	b.Path(from, quoted, exprString)
 	b.Path(from, ltrue, exprBoolTrue)
 	b.Path(from, lfalse, exprBoolFalse)
 	b.Path(exprIdentifier, operator, exprOperator)
@@ -101,13 +104,22 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.Path(exprOperator, number, exprNumber)
 	b.Path(exprOperator, identifier, exprIdentifier)
 	b.Path(exprOperator, quoted, exprString)
+	b.Path(exprOperator, ltrue, exprBoolTrue)
+	b.Path(exprOperator, lfalse, exprBoolFalse)
 	b.Path(exprNumber, operator, exprOperator)
 	b.Path(exprNumber, returnVia, returnTo)
 	b.Path(exprNumber, parenClose, from)
 	b.Path(exprString, parenClose, from)
 	b.Path(exprString, operator, exprOperator)
+	b.Path(exprString, comma, exprComma)
+	b.Path(exprString, returnVia, returnTo)
+	b.Path(exprComma, quoted, exprString)
 	b.Path(exprBoolTrue, returnVia, returnTo)
 	b.Path(exprBoolFalse, returnVia, returnTo)
+	b.Path(exprBoolTrue, operator, exprOperator)
+	b.Path(exprBoolFalse, returnVia, returnTo)
+	b.Path(exprBoolTrue, parenClose, from)
+	b.Path(exprBoolFalse, parenClose, from)
 
 	b.WhenEntering(exprNumber, p.createNumberLiteral)
 	b.WhenEntering(exprString, p.createStringLiteral)
@@ -115,4 +127,5 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.WhenEntering(exprBoolFalse, p.createBooleanLiteral)
 	b.WhenEntering(exprIdentifier, p.createIdentifier)
 	b.WhenEntering(exprOperator, p.createOperator)
+	b.WhenEntering(exprComma, p.closeArgument)
 }

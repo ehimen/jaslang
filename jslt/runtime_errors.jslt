@@ -1,0 +1,5 @@
+<!Operator invalid arguments
+<<<CODE
+println("hello" + 2);
+<<<ERROR
+Unknown operator + with operands (string, number)
