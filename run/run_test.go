@@ -46,7 +46,7 @@ func TestJslt(t *testing.T) {
 		return
 	} else {
 		for _, test := range tests {
-			runTest(t, test)
+			t.Run(test.name, func(t *testing.T) { runTest(t, test) })
 		}
 	}
 }

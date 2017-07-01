@@ -80,12 +80,16 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 
 	exprNumber := prefix + lex.LNumber.String()
 	exprString := prefix + lex.LQuoted.String()
+	exprBoolTrue := prefix + lex.LBoolTrue.String()
+	exprBoolFalse := prefix + lex.LBoolFalse.String()
 	exprOperator := prefix + lex.LOperator.String()
 	exprIdentifier := prefix + lex.LIdentifier.String()
 	exprParenOpen := prefix + lex.LParenOpen.String()
 
 	b.Path(from, number, exprNumber)
 	b.Path(from, identifier, exprIdentifier)
+	b.Path(from, ltrue, exprBoolTrue)
+	b.Path(from, lfalse, exprBoolFalse)
 	b.Path(exprIdentifier, operator, exprOperator)
 	b.Path(exprIdentifier, parenOpen, exprParenOpen)
 	b.Path(exprIdentifier, parenClose, from)
@@ -101,9 +105,13 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.Path(exprNumber, parenClose, from)
 	b.Path(exprString, parenClose, from)
 	b.Path(exprString, operator, exprOperator)
+	b.Path(exprBoolTrue, returnVia, returnTo)
+	b.Path(exprBoolFalse, returnVia, returnTo)
 
 	b.WhenEntering(exprNumber, p.createNumberLiteral)
 	b.WhenEntering(exprString, p.createStringLiteral)
+	b.WhenEntering(exprBoolTrue, p.createBooleanLiteral)
+	b.WhenEntering(exprBoolFalse, p.createBooleanLiteral)
 	b.WhenEntering(exprIdentifier, p.createIdentifier)
 	b.WhenEntering(exprOperator, p.createOperator)
 }

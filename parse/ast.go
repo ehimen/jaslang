@@ -1,10 +1,12 @@
 package parse
 
 import (
+	"encoding/json"
 	"errors"
 )
 
 type Node interface {
+	json.Marshaler
 }
 
 type ContainsChildren interface {
@@ -22,6 +24,10 @@ type Adjustable interface {
 // have children.
 type ParentNode struct {
 	children []Node
+}
+
+func (parent *ParentNode) encodeChildren() ([]byte, error) {
+	return json.Marshal(parent.children)
 }
 
 func (parent *ParentNode) push(child Node) (error, bool) {
@@ -58,6 +64,10 @@ type RootNode struct {
 	Statements []*Statement
 }
 
+func (root RootNode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(root.Statements)
+}
+
 func (root *RootNode) PushStatement(statement *Statement) {
 	root.Statements = append(root.Statements, statement)
 }
@@ -66,30 +76,98 @@ type Statement struct {
 	ParentNode
 }
 
+func (s Statement) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type     string
+		Children []Node
+	}{
+		Type:     "statement",
+		Children: s.children,
+	})
+}
+
 type FunctionCall struct {
 	Identifier *Identifier
 	ParentNode
+}
+
+func (f FunctionCall) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type       string
+		Identifier *Identifier
+		Children   []Node
+	}{
+		Type:       "function",
+		Identifier: f.Identifier,
+		Children:   f.children,
+	})
 }
 
 type Identifier struct {
 	Identifier string
 }
 
+func (i Identifier) MarshalJSON() ([]byte, error) {
+	return json.Marshal(i.Identifier)
+}
+
 type String struct {
 	Value string
+}
+
+func (s String) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type  string
+		Value string
+	}{
+		Type:  "string",
+		Value: s.Value,
+	})
 }
 
 type Boolean struct {
 	Value bool
 }
 
+func (b Boolean) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type  string
+		Value bool
+	}{
+		Type:  "boolean",
+		Value: b.Value,
+	})
+}
+
 type Number struct {
 	Value float64
+}
+
+func (n Number) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type  string
+		Value float64
+	}{
+		Type:  "number",
+		Value: n.Value,
+	})
 }
 
 type Operator struct {
 	Operator string
 	ParentNode
+}
+
+func (o Operator) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Children []Node
+		Type     string
+		Operator string
+	}{
+		Children: o.children,
+		Type:     "operator",
+		Operator: o.Operator,
+	})
 }
 
 type Let struct {
@@ -141,6 +219,20 @@ func (let *Let) removeLastChild() {
 
 func (let *Let) Children() []Node {
 	return let.children
+}
+
+func (let Let) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type       string
+		ValueType  Identifier
+		Identifier Identifier
+		Children   []Node
+	}{
+		Type:       "assignment",
+		ValueType:  *let.Type,
+		Identifier: *let.Identifier,
+		Children:   let.children,
+	})
 }
 
 func NewStatement(children ...Node) *Statement {
