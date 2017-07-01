@@ -64,9 +64,10 @@ func printAst(file io.RuneReader) {
 	if ast, err := parser.Parse(); err != nil {
 		fail(err.Error())
 	} else {
-		if astJson, err := json.Marshal(ast); err != nil {
+		if astJson, err := json.MarshalIndent(ast, "", "    "); err != nil {
 			fail(err.Error())
 		} else {
+
 			fmt.Println(string(astJson))
 		}
 	}
