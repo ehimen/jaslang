@@ -9,3 +9,11 @@ Hello world!
 println(4 + "hello");
 <<<ERROR
 Unknown operator + with operands (number, string)
+
+<!Multiline syntax error
+<<<CODE
+println("hello world");
+
+"foo" "bar";
+<<<ERROR
+Unexpected token "bar" at position 7, line 3

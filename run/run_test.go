@@ -46,65 +46,64 @@ func TestJslt(t *testing.T) {
 		return
 	} else {
 		for _, test := range tests {
-			t.Run(test.name, func(t *testing.T) { runTest(t, test) })
+			t.Run(
+				test.name,
+				func(t *testing.T) {
+					actual := bytes.NewBufferString("")
+					actualError := bytes.NewBufferString("")
+
+					encounteredError := run.Interpret(test.code, test.input, actual, actualError)
+
+					fail := func(msg string) {
+						t.Errorf("\"%s\" failed!\n%s", test.name, msg)
+					}
+
+					if test.output != nil {
+						expected, _ := ioutil.ReadAll(test.output)
+
+						if actual.String() != string(expected) {
+							test.code.Seek(0, io.SeekStart)
+							code, _ := ioutil.ReadAll(test.code)
+							fail(fmt.Sprintf(
+								"Expected output:\n%s\nActual output:\n%s\nErrors:\n%s\nInput:\n%s\n",
+								expected,
+								actual.String(),
+								actualError.String(),
+								code,
+							))
+						}
+					} else if len(actual.String()) > 0 {
+						fail(fmt.Sprintf(
+							"Unexpected output: %s",
+							actual.String(),
+						))
+					}
+
+					if test.error == nil && encounteredError {
+						fail(fmt.Sprintf(
+							"Got error output: %s\nExpected none",
+							actualError.String(),
+						))
+					} else if test.error != nil {
+						expectedError, _ := ioutil.ReadAll(test.error)
+
+						if !encounteredError {
+							fail(fmt.Sprintf(
+								"Expected error output: %s\nBut interpreter returned success",
+								expectedError,
+							))
+						} else if string(expectedError) != actualError.String() {
+							fail(fmt.Sprintf(
+								"Expected error output:\n%s\nBut got:\n%s",
+								string(expectedError),
+								actualError.String(),
+							))
+						}
+					}
+				},
+			)
 		}
 	}
-}
-
-func runTest(t *testing.T, test testCase) {
-
-	actual := bytes.NewBufferString("")
-	actualError := bytes.NewBufferString("")
-
-	encounteredError := run.Interpret(test.code, test.input, actual, actualError)
-
-	fail := func(msg string) {
-		t.Errorf("\"%s\" failed!\n%s", test.name, msg)
-	}
-
-	if test.output != nil {
-		expected, _ := ioutil.ReadAll(test.output)
-
-		if actual.String() != string(expected) {
-			test.code.Seek(0, io.SeekStart)
-			code, _ := ioutil.ReadAll(test.code)
-			fail(fmt.Sprintf(
-				"Expected output:\n%s\nActual output:\n%s\nErrors:\n%s\nInput:\n%s\n",
-				expected,
-				actual.String(),
-				actualError.String(),
-				code,
-			))
-		}
-	} else if len(actual.String()) > 0 {
-		fail(fmt.Sprintf(
-			"Unexpected output: %s",
-			actual.String(),
-		))
-	}
-
-	if test.error == nil && encounteredError {
-		fail(fmt.Sprintf(
-			"Got error output: %s\nExpected none",
-			actualError.String(),
-		))
-	} else if test.error != nil {
-		expectedError, _ := ioutil.ReadAll(test.error)
-
-		if !encounteredError {
-			fail(fmt.Sprintf(
-				"Expected error output: %s\nBut interpreter returned success",
-				expectedError,
-			))
-		} else if string(expectedError) != actualError.String() {
-			fail(fmt.Sprintf(
-				"Expected error output: %s\nBut got:\n%s",
-				expectedError,
-				actualError.String(),
-			))
-		}
-	}
-
 }
 
 func loadTests(t *testing.T) ([]testCase, bool) {

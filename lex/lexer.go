@@ -43,12 +43,13 @@ var Keywords = []LexemeType{LIf, LElse, LElseIf, LLet, LWhile}
 
 type Lexeme struct {
 	Start int
+	Line  int
 	Type  LexemeType
 	Value string
 }
 
 func (l Lexeme) String() string {
-	return fmt.Sprintf("\"%s\" (%s) at position %d", l.Value, l.Type, l.Start)
+	return fmt.Sprintf("\"%s\" (%s) at position %d:%d", l.Value, l.Type, l.Line, l.Start)
 }
 
 func (l Lexeme) IsEmpty() bool {

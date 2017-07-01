@@ -29,6 +29,7 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.Path(start, term, term)
 
 	buildExpr(p, builder, "", start, term, term)
+	buildExpr(p, builder, "term", term, term, term)
 
 	builder.Path(quoted, term, term)
 	builder.Path(quoted, parenClose, parenClose)
