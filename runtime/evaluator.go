@@ -99,6 +99,10 @@ func (e *evaluator) evaluate(node parse.Node) (error, Value) {
 		return e.evaluateIdentifier(identifier, args)
 	}
 
+	if assignment, isAssignment := node.(*parse.Assignment); isAssignment {
+		return e.evaluateAssignment(assignment, args)
+	}
+
 	if _, isGroup := node.(*parse.Group); isGroup {
 		if len(args) != 1 {
 			return errors.New(fmt.Sprintf("Group should not have more than 1 child, actually has: %d", len(args))), nil
@@ -144,14 +148,18 @@ func (e *evaluator) evaluateOperator(operator *parse.Operator, args []Value) (er
 }
 
 func (e *evaluator) evaluateLet(let *parse.Let, args []Value) (error, Value) {
-	if len(args) != 1 {
-		return errors.New("Assignment must be performed with exactly one value"), nil
+	if len(args) > 1 {
+		return errors.New("Assignment with declaration must have at most one value"), nil
 	}
 
 	if valueType, err := e.context.Table.Type(let.Type.Identifier); err != nil {
 		return err, nil
+	} else if err := e.context.Table.Define(let.Identifier.Identifier, valueType); err != nil {
+		return err, nil
+	} else if len(args) == 1 {
+		return e.context.Table.Set(let.Identifier.Identifier, args[0]), nil
 	} else {
-		return e.context.Table.Set(let.Identifier.Identifier, args[0], valueType), nil
+		return nil, nil
 	}
 }
 
@@ -159,4 +167,12 @@ func (e *evaluator) evaluateIdentifier(identifier *parse.Identifier, args []Valu
 	val, err := e.context.Table.Get(identifier.Identifier)
 
 	return err, val
+}
+
+func (e *evaluator) evaluateAssignment(assignment *parse.Assignment, args []Value) (error, Value) {
+	if len(args) != 1 {
+		return errors.New("Assignment must have at exactly one value"), nil
+	}
+
+	return e.context.Table.Set(assignment.Identifier.Identifier, args[0]), nil
 }

@@ -69,3 +69,11 @@ true
 let str string = 42;
 <<<ERROR
 Invalid value for "str". Value 42.000 is not of expected type string
+
+<!Deferred assignment
+<<<CODE
+let str string;
+str = "hello";
+println(str);
+<<<OUTPUT
+hello

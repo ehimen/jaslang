@@ -228,23 +228,45 @@ func (let Let) MarshalJSON() ([]byte, error) {
 		Identifier Identifier
 		Children   []Node
 	}{
-		Type:       "assignment",
+		Type:       "declaration",
 		ValueType:  *let.Type,
 		Identifier: *let.Identifier,
 		Children:   let.children,
 	})
 }
 
-//
+type Assignment struct {
+	ParentNode
+	Identifier *Identifier
+}
 
-//type ContainsChildren interface {
-//	push(child Node) (error, bool)
-//	Children() []Node
-//}
+func (assignment Assignment) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type       string
+		Identifier Identifier
+		Children   []Node
+	}{
+		Type:       "assignment",
+		Identifier: *assignment.Identifier,
+		Children:   assignment.children,
+	})
+}
+
+func (assignment *Assignment) push(child Node) (error, bool) {
+	if assignment.Identifier == nil {
+		if identifier, isIdentifier := child.(*Identifier); !isIdentifier {
+			return errors.New("First child of an assignment statement must be an identifier"), false
+		} else {
+			assignment.Identifier = identifier
+			return nil, true
+		}
+	}
+
+	return assignment.ParentNode.push(child)
+}
 
 type Group struct {
 	ParentNode
-	//children []Node
 }
 
 func (group Group) MarshalJSON() ([]byte, error) {
@@ -285,7 +307,7 @@ func NewNumber(value float64) *Number {
 	return &Number{value}
 }
 
-func NewLet(identifier string, typeIdentifier string, children ...Node) *Let {
+func NewDeclaration(identifier string, typeIdentifier string, children ...Node) *Let {
 	return &Let{children: children, Identifier: NewIdentifier(identifier), Type: NewIdentifier(typeIdentifier)}
 }
 

@@ -234,6 +234,31 @@ func (p *parser) createGroup() error {
 	return nil
 }
 
+// Creates an assignment node for when we have
+// assignment without declaration (outside of
+// a let).
+//
+// Note: this won't do anything if we're inside
+// a let to avoid us creating this twice.
+//
+// TODO: better to model declaration and assignment
+// TODO: separately?
+func (p *parser) createAssignment() error {
+	inAssignment := p.nodeStackContains(func(node ContainsChildren) bool {
+		_, isAssignment := node.(*Let)
+
+		return isAssignment
+	})
+
+	if inAssignment {
+		return nil
+	}
+
+	p.push(&Assignment{})
+
+	return nil
+}
+
 // Closes all open nodes up the stack
 // until we close a statement node.
 func (p *parser) closeStatement() error {
@@ -349,17 +374,19 @@ func (p *parser) push(node Node) error {
 // of the operator, and that the forced precedence of the group
 // is respected. E.g. (4 + 4) / 2 should have the / operator
 // at the top, with two children: the group 4 + 4 and number 2.
+//
+// Also true when the parent's last child an identifier and
+// the replacer is the assignment operation. This means we
+// reshuffle the AST so that the assignment becomes the parent
+// node, and everything sitting to the right of the "=" become
+// children of the assignment.
 func (p parser) shouldReplaceLastChildOf(replacer ContainsChildren, parent Adjustable) ContainsChildren {
 
 	// Check operator precedence.
 	parentOperator, parentIsOperator := parent.(*Operator)
 	replacerOperator, replacerIsOperator := replacer.(*Operator)
 
-	if !replacerIsOperator {
-		return nil
-	}
-
-	if parentIsOperator {
+	if parentIsOperator && replacerIsOperator {
 		takesPrecedence, err := p.operators.TakesPrecedence(replacerOperator.Operator, parentOperator.Operator)
 		// TODO: error checking
 
@@ -376,7 +403,7 @@ func (p parser) shouldReplaceLastChildOf(replacer ContainsChildren, parent Adjus
 	lastChild := parent.getLastChild()
 	lastChildOperator, lastChildIsOperator := lastChild.(*Operator)
 
-	if lastChildIsOperator {
+	if lastChildIsOperator && replacerIsOperator {
 		takesPrecedence, err := p.operators.TakesPrecedence(replacerOperator.Operator, lastChildOperator.Operator)
 		// TODO: error checking
 
@@ -389,7 +416,18 @@ func (p parser) shouldReplaceLastChildOf(replacer ContainsChildren, parent Adjus
 		}
 	}
 
-	if _, lastChildIsGroup := lastChild.(*Group); replacerIsOperator && lastChildIsGroup {
+	_, replacerIsAssignment := replacer.(*Assignment)
+
+	if _, lastChildIsIdentifier := lastChild.(*Identifier); replacerIsAssignment && lastChildIsIdentifier {
+		return replacer
+	}
+
+	// All other cases require our replacer to be an operator.
+	if !replacerIsOperator {
+		return nil
+	}
+
+	if _, lastChildIsGroup := lastChild.(*Group); lastChildIsGroup {
 		return replacer
 	}
 

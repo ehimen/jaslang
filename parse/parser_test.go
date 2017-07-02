@@ -147,7 +147,7 @@ func TestLet(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
-			parse.NewLet(
+			parse.NewDeclaration(
 				"foo",
 				"number",
 				parse.NewNumber(1),
@@ -174,7 +174,7 @@ func TestLetWithExpression(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
-			parse.NewLet(
+			parse.NewDeclaration(
 				"foo",
 				"number",
 				parse.NewOperator(

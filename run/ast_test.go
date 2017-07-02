@@ -60,7 +60,7 @@ var tests = []struct {
 `,
 	},
 	{
-		name:  "assignment",
+		name:  "declaration + assignment",
 		input: "let b boolean = true;",
 		expected: `
 [
@@ -68,7 +68,7 @@ var tests = []struct {
 		"Type": "statement",
 		"Children": [
 			{
-				"Type": "assignment",
+				"Type": "declaration",
 				"Identifier": "b",
 				"ValueType": "boolean",
 				"Children": [

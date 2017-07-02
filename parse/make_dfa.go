@@ -29,7 +29,10 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.Path(start, let, let)
 	builder.Path(start, term, start)
 
-	buildExpr(p, builder, "", start, term, start)
+	defaultExprPrefix := buildExpr(p, builder, "", start, term, start)
+
+	builder.Path(defaultExprPrefix+identifier, equals, equals)
+	buildExpr(p, builder, "assignment", equals, term, start)
 
 	builder.Path(quoted, term, start)
 	builder.Path(quoted, parenClose, parenClose)
@@ -42,6 +45,7 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 
 	builder.Path(let, identifier, "let-identifier")
 	builder.Path("let-identifier", identifier, "let-type-identifier")
+	builder.Path("let-type-identifier", term, start)
 	builder.Path("let-type-identifier", equals, "let-equals")
 	buildExpr(p, builder, "let", "let-equals", term, start)
 	builder.WhenEntering("let-identifier", p.createIdentifier)
@@ -56,6 +60,7 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.WhenEntering(operator, p.createOperator)
 	builder.WhenEntering(let, p.createLet)
 	builder.WhenEntering(parenOpen, p.createGroup)
+	builder.WhenEntering(equals, p.createAssignment)
 
 	builder.Accept(start)
 
@@ -68,7 +73,12 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 // For example, the expression allowed after the assignment
 // operator. These nodes are in the let-specific section of the
 // the DFA.
-func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, returnVia string, returnTo string) {
+//
+// This function returns the prefix used so that the built portion
+// of the AST can be extended externally.
+// For example, at the beginning of statement we want to extend
+// identifier to allow an equals to follow (for assignment).
+func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, returnVia string, returnTo string) string {
 	if len(prefix) > 0 {
 		prefix = prefix + "-expr-"
 	} else {
@@ -133,4 +143,6 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.WhenEntering(exprComma, p.closeArgument)
 	b.WhenEntering(exprParenOpen, p.createGroup)
 	b.WhenEntering(exprParenClose, p.closeGroupOrFunction)
+
+	return prefix
 }

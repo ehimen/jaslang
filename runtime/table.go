@@ -72,27 +72,36 @@ func (table *SymbolTable) AddOperator(operator string, operands Types, invokable
 	table.operators = append(table.operators, operatorEntry{operator: operator, operands: operands, operation: invokable})
 }
 
-func (table *SymbolTable) Set(identifier string, value Value, t Type) error {
-	valueEntry, exists := table.entries[identifier]
-
-	if exists {
-		valueEntry.value = value
-	} else {
-		valueEntry = &entry{identifier: identifier, valueType: t, value: value}
+func (table *SymbolTable) Define(identifier string, t Type) error {
+	if _, exists := table.entries[identifier]; exists {
+		return errors.New(fmt.Sprintf(`Cannot declare symbol "%s"`, identifier))
 	}
 
-	if value.Type() != t {
-		return errors.New(fmt.Sprintf(
-			`Invalid value for "%s". Value %s is not of expected type %s`,
-			identifier,
-			value,
-			t,
-		))
-	}
+	// TODO: default value!?
 
-	table.entries[identifier] = valueEntry
+	table.entries[identifier] = &entry{identifier: identifier, valueType: t}
 
 	return nil
+}
+
+func (table *SymbolTable) Set(identifier string, value Value) error {
+
+	if valueEntry, exists := table.entries[identifier]; !exists {
+		return UnknownIdentifier{identifier: identifier}
+	} else {
+		if value.Type() != valueEntry.valueType {
+			return errors.New(fmt.Sprintf(
+				`Invalid value for "%s". Value %s is not of expected type %s`,
+				identifier,
+				value,
+				valueEntry.valueType,
+			))
+		}
+
+		valueEntry.value = value
+
+		return nil
+	}
 }
 
 func (table *SymbolTable) Get(identifier string) (Value, error) {
