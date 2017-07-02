@@ -77,3 +77,35 @@ str = "hello";
 println(str);
 <<<OUTPUT
 hello
+
+<!Deferred assignment from expr
+<<<CODE
+let num number;
+num = 13 * 2 / 2;
+println(num);
+<<<OUTPUT
+13.000
+
+<!Unknown variable
+<<<CODE
+println(num);
+<<<ERROR
+Unknown identifier: num
+
+<!Default variable on declaration
+<<<CODE
+let num number;
+let str string;
+let bool boolean;
+println(num, str, bool);
+num = 42;
+str = "hello";
+bool = true;
+println(num, str, bool);
+<<<OUTPUT
+0.000
+
+false
+42.000
+hello
+true

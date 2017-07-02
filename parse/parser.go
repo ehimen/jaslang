@@ -202,6 +202,10 @@ func (p *parser) closeGroupOrFunction() error {
 	return nil
 }
 
+// Closes a node in an argument list. This will
+// close all nodes until it reaches a function call.
+// If we're not in a function call, this will return
+// an unexpected token error.
 func (p *parser) closeArgument() error {
 	containsFunctionCall := p.nodeStackContains(func(node ContainsChildren) bool {
 		_, isFunctionCall := node.(*FunctionCall)
@@ -213,7 +217,9 @@ func (p *parser) closeArgument() error {
 		return UnexpectedTokenError{Lexeme: p.current}
 	}
 
-	p.closeNode()
+	for _, isFunctionCall := getContext(p).(*FunctionCall); len(p.nodeStack) > 0 && !isFunctionCall; {
+		p.closeNode()
+	}
 
 	return nil
 }

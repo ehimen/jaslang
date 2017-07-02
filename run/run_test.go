@@ -62,7 +62,7 @@ func TestJslt(t *testing.T) {
 					if test.output != nil {
 						expected, _ := ioutil.ReadAll(test.output)
 
-						if actual.String() != string(expected) {
+						if strings.TrimSpace(actual.String()) != strings.TrimSpace(string(expected)) {
 							test.code.Seek(0, io.SeekStart)
 							code, _ := ioutil.ReadAll(test.code)
 							fail(fmt.Sprintf(

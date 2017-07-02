@@ -10,6 +10,21 @@ var TypeNumber = Type("number")
 var TypeString = Type("string")
 var TypeInvokable = Type("invokable")
 
+func (t Type) DefaultValue() Value {
+	switch t {
+	case TypeBoolean:
+		return Boolean{Value: false}
+	case TypeNumber:
+		return Number{Value: 0}
+	case TypeString:
+		return String{Value: ""}
+	case TypeInvokable:
+		return Noop{}
+	}
+
+	return nil
+}
+
 type Types []Type
 
 func (types Types) Equal(other Types) bool {

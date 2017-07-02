@@ -13,7 +13,7 @@ func (p Println) Type() Type {
 
 func (p Println) Invoke(context *Context, args []Value) (error, Value) {
 	for _, arg := range args {
-		context.Output.Write([]byte(arg.String()))
+		context.Output.Write([]byte(arg.String() + "\n"))
 	}
 
 	return nil, Void{}

@@ -77,9 +77,13 @@ func (table *SymbolTable) Define(identifier string, t Type) error {
 		return errors.New(fmt.Sprintf(`Cannot declare symbol "%s"`, identifier))
 	}
 
-	// TODO: default value!?
+	value := t.DefaultValue()
 
-	table.entries[identifier] = &entry{identifier: identifier, valueType: t}
+	if value == nil {
+		return errors.New(fmt.Sprintf("Type %s cannot have a default value!", t))
+	}
+
+	table.entries[identifier] = &entry{identifier: identifier, valueType: t, value: value}
 
 	return nil
 }
@@ -106,6 +110,10 @@ func (table *SymbolTable) Set(identifier string, value Value) error {
 
 func (table *SymbolTable) Get(identifier string) (Value, error) {
 	if entry, exists := table.entries[identifier]; exists {
+		if entry.value == nil {
+			return nil, errors.New(fmt.Sprintf("Symbol %s has not been initialised", identifier))
+		}
+
 		return entry.value, nil
 	}
 
