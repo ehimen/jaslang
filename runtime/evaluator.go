@@ -141,6 +141,12 @@ func (e *evaluator) evaluateOperator(operator *parse.Operator, args []Value) (er
 	}
 
 	if invokable, err := e.context.Table.Operator(operator.Operator, operands); err != nil {
+		if unknownOperator, isUnknownOperator := err.(UnknownOperator); isUnknownOperator {
+			unknownOperator.node = operator
+
+			return unknownOperator, nil
+		}
+
 		return err, nil
 	} else {
 		return invokable.Invoke(e.context, args)

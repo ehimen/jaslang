@@ -141,23 +141,23 @@ func (p *parser) consume() (next lex.Lexeme, eof error, lexErr error) {
 func (p *parser) createIdentifier() error {
 	if p.next.Type == lex.LParenOpen {
 		p.openedFunction = true
-		return p.push(NewFunctionCall(p.current.Value))
+		return p.push(NewFunctionCall(p.current.Value, p.current.Line, p.current.Start))
 	} else {
-		return p.push(NewIdentifier(p.current.Value))
+		return p.push(NewIdentifier(p.current.Value, p.current.Line, p.current.Start))
 	}
 }
 
 func (p *parser) createStringLiteral() error {
-	return p.push(NewString(p.current.Value))
+	return p.push(NewString(p.current.Value, p.current.Line, p.current.Start))
 }
 
 func (p *parser) createBooleanLiteral() error {
-	return p.push(NewBoolean(p.current.Type == lex.LBoolTrue))
+	return p.push(NewBoolean(p.current.Type == lex.LBoolTrue, p.current.Line, p.current.Start))
 }
 
 func (p *parser) createNumberLiteral() error {
 	if number, err := strconv.ParseFloat(p.current.Value, 64); err == nil {
-		p.push(NewNumber(number))
+		p.push(NewNumber(number, p.current.Line, p.current.Start))
 	} else {
 		return InvalidNumberError{UnexpectedTokenError{Lexeme: p.current}}
 	}
@@ -166,11 +166,11 @@ func (p *parser) createNumberLiteral() error {
 }
 
 func (p *parser) createOperator() error {
-	return p.push(NewOperator(p.current.Value))
+	return p.push(NewOperator(p.current.Value, p.current.Line, p.current.Start))
 }
 
 func (p *parser) createLet() error {
-	return p.push(&Let{})
+	return p.push(&Let{position: position{line: p.current.Line, column: p.current.Start}})
 }
 
 func (p *parser) closeNode() error {
@@ -235,7 +235,7 @@ func (p *parser) createGroup() error {
 		return nil
 	}
 
-	p.push(NewGroup())
+	p.push(NewGroup(p.current.Line, p.current.Start))
 
 	return nil
 }
@@ -260,7 +260,7 @@ func (p *parser) createAssignment() error {
 		return nil
 	}
 
-	p.push(&Assignment{})
+	p.push(NewAssignment(p.current.Line, p.current.Start))
 
 	return nil
 }
@@ -282,12 +282,16 @@ func (p *parser) closeStatement() error {
 	return nil
 }
 
+// Pushes a node on to the AST, preforming
+// any reshuffling to handle precedence,
+// as well as storing the node in the current
+// node stack if it is expecting children.
 func (p *parser) push(node Node) error {
 	context := getContext(p)
 
 	// Insert a statement if we need to.
 	if context == nil {
-		statement := &Statement{}
+		statement := NewStatement(p.current.Line, p.current.Start)
 		p.ast.PushStatement(statement)
 		p.nodeStack = append(p.nodeStack, statement)
 	}

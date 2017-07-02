@@ -7,6 +7,8 @@ import (
 
 type Node interface {
 	json.Marshaler
+	Line() int
+	Column() int
 }
 
 type ContainsChildren interface {
@@ -18,6 +20,21 @@ type Adjustable interface {
 	ContainsChildren
 	getLastChild() Node
 	removeLastChild()
+}
+
+// Embedded struct to record a node's position
+// in the source.
+type position struct {
+	line   int
+	column int
+}
+
+func (p position) Line() int {
+	return p.line
+}
+
+func (p position) Column() int {
+	return p.column
 }
 
 // Can be embedded in to all node types that
@@ -64,6 +81,14 @@ type RootNode struct {
 	Statements []*Statement
 }
 
+func (root RootNode) Line() int {
+	return 1
+}
+
+func (root RootNode) Column() int {
+	return 1
+}
+
 func (root RootNode) MarshalJSON() ([]byte, error) {
 	return json.Marshal(root.Statements)
 }
@@ -74,6 +99,7 @@ func (root *RootNode) PushStatement(statement *Statement) {
 
 type Statement struct {
 	ParentNode
+	position
 }
 
 func (s Statement) MarshalJSON() ([]byte, error) {
@@ -89,6 +115,7 @@ func (s Statement) MarshalJSON() ([]byte, error) {
 type FunctionCall struct {
 	Identifier *Identifier
 	ParentNode
+	position
 }
 
 func (f FunctionCall) MarshalJSON() ([]byte, error) {
@@ -105,6 +132,7 @@ func (f FunctionCall) MarshalJSON() ([]byte, error) {
 
 type Identifier struct {
 	Identifier string
+	position
 }
 
 func (i Identifier) MarshalJSON() ([]byte, error) {
@@ -113,6 +141,7 @@ func (i Identifier) MarshalJSON() ([]byte, error) {
 
 type String struct {
 	Value string
+	position
 }
 
 func (s String) MarshalJSON() ([]byte, error) {
@@ -127,6 +156,7 @@ func (s String) MarshalJSON() ([]byte, error) {
 
 type Boolean struct {
 	Value bool
+	position
 }
 
 func (b Boolean) MarshalJSON() ([]byte, error) {
@@ -141,6 +171,7 @@ func (b Boolean) MarshalJSON() ([]byte, error) {
 
 type Number struct {
 	Value float64
+	position
 }
 
 func (n Number) MarshalJSON() ([]byte, error) {
@@ -156,6 +187,7 @@ func (n Number) MarshalJSON() ([]byte, error) {
 type Operator struct {
 	Operator string
 	ParentNode
+	position
 }
 
 func (o Operator) MarshalJSON() ([]byte, error) {
@@ -174,6 +206,7 @@ type Let struct {
 	Identifier *Identifier
 	Type       *Identifier
 	children   []Node
+	position
 }
 
 func (let *Let) push(child Node) (error, bool) {
@@ -238,6 +271,7 @@ func (let Let) MarshalJSON() ([]byte, error) {
 type Assignment struct {
 	ParentNode
 	Identifier *Identifier
+	position
 }
 
 func (assignment Assignment) MarshalJSON() ([]byte, error) {
@@ -267,6 +301,7 @@ func (assignment *Assignment) push(child Node) (error, bool) {
 
 type Group struct {
 	ParentNode
+	position
 }
 
 func (group Group) MarshalJSON() ([]byte, error) {
@@ -279,38 +314,47 @@ func (group Group) MarshalJSON() ([]byte, error) {
 	})
 }
 
-func NewStatement(children ...Node) *Statement {
-	return &Statement{ParentNode: ParentNode{children: children}}
+func NewStatement(line int, column int, children ...Node) *Statement {
+	return &Statement{ParentNode: ParentNode{children: children}, position: position{line: line, column: column}}
 }
 
-func NewFunctionCall(identifier string, children ...Node) *FunctionCall {
-	return &FunctionCall{Identifier: NewIdentifier(identifier), ParentNode: ParentNode{children: children}}
+func NewFunctionCall(identifier string, line int, column int, children ...Node) *FunctionCall {
+	return &FunctionCall{Identifier: NewIdentifier(identifier, line, column), ParentNode: ParentNode{children: children}}
 }
 
-func NewIdentifier(identifier string) *Identifier {
-	return &Identifier{Identifier: identifier}
+func NewIdentifier(identifier string, line int, column int) *Identifier {
+	return &Identifier{Identifier: identifier, position: position{line: line, column: column}}
 }
 
-func NewOperator(operator string, children ...Node) *Operator {
-	return &Operator{Operator: operator, ParentNode: ParentNode{children: children}}
+func NewOperator(operator string, line int, column int, children ...Node) *Operator {
+	return &Operator{Operator: operator, ParentNode: ParentNode{children: children}, position: position{line: line, column: column}}
 }
 
-func NewString(value string) *String {
-	return &String{value}
+func NewString(value string, line int, column int) *String {
+	return &String{Value: value, position: position{line: line, column: column}}
 }
 
-func NewBoolean(value bool) *Boolean {
-	return &Boolean{value}
+func NewBoolean(value bool, line int, column int) *Boolean {
+	return &Boolean{Value: value, position: position{line: line, column: column}}
 }
 
-func NewNumber(value float64) *Number {
-	return &Number{value}
+func NewNumber(value float64, line int, column int) *Number {
+	return &Number{Value: value, position: position{line: line, column: column}}
 }
 
-func NewDeclaration(identifier string, typeIdentifier string, children ...Node) *Let {
-	return &Let{children: children, Identifier: NewIdentifier(identifier), Type: NewIdentifier(typeIdentifier)}
+func NewDeclaration(identifier Identifier, typeIdentifier Identifier, line int, column int, children ...Node) *Let {
+	return &Let{
+		children:   children,
+		Identifier: &identifier,
+		Type:       &typeIdentifier,
+		position:   position{line: line, column: column},
+	}
 }
 
-func NewGroup() *Group {
-	return &Group{}
+func NewGroup(line int, column int) *Group {
+	return &Group{position: position{line: line, column: column}}
+}
+
+func NewAssignment(line int, column int) *Assignment {
+	return &Assignment{position: position{line: line, column: column}}
 }

@@ -4,12 +4,6 @@ println("Hello world!");
 <<<OUTPUT
 Hello world!
 
-<!Invalid operands
-<<<CODE
-println(4 + "hello");
-<<<ERROR
-Unknown operator + with operands (number, string)
-
 <!Multi-arg println
 <<<CODE
 println("hello", "world");

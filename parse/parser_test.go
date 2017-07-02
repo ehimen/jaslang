@@ -21,9 +21,13 @@ func TestSimpleFunctionCall(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
+			1,
+			1,
 			parse.NewFunctionCall(
 				"print",
-				parse.NewString("Hello, world!"),
+				1,
+				1,
+				parse.NewString("Hello, world!", 1, 3),
 			),
 		),
 	)
@@ -41,8 +45,8 @@ func TestTwoLiterals(t *testing.T) {
 	})
 
 	expected := expectStatements(
-		parse.NewStatement(parse.NewNumber(float64(1.34))),
-		parse.NewStatement(parse.NewNumber(float64(3.42))),
+		parse.NewStatement(1, 1, parse.NewNumber(float64(1.34), 1, 1)),
+		parse.NewStatement(1, 4, parse.NewNumber(float64(3.42), 1, 4)),
 	)
 
 	assert.Equal(t, expected, testParse(parser, t))
@@ -80,8 +84,8 @@ func TestTrueFalse(t *testing.T) {
 	})
 
 	expected := expectStatements(
-		parse.NewStatement(parse.NewBoolean(true)),
-		parse.NewStatement(parse.NewBoolean(false)),
+		parse.NewStatement(1, 1, parse.NewBoolean(true, 1, 1)),
+		parse.NewStatement(1, 4, parse.NewBoolean(false, 1, 4)),
 	)
 
 	assert.Equal(t, expected, testParse(parser, t))
@@ -97,10 +101,14 @@ func TestOperator(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
+			1,
+			1,
 			parse.NewOperator(
 				"+",
-				parse.NewIdentifier("a"),
-				parse.NewIdentifier("b"),
+				1,
+				2,
+				parse.NewIdentifier("a", 1, 1),
+				parse.NewIdentifier("b", 1, 3),
 			),
 		),
 	)
@@ -120,14 +128,20 @@ func TestMultipleOperator(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
+			1,
+			1,
 			parse.NewOperator(
 				"+",
+				1,
+				4,
 				parse.NewOperator(
 					"+",
-					parse.NewIdentifier("a"),
-					parse.NewIdentifier("b"),
+					1,
+					2,
+					parse.NewIdentifier("a", 1, 1),
+					parse.NewIdentifier("b", 1, 3),
 				),
-				parse.NewIdentifier("c"),
+				parse.NewIdentifier("c", 1, 5),
 			),
 		),
 	)
@@ -147,10 +161,14 @@ func TestLet(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
+			1,
+			1,
 			parse.NewDeclaration(
-				"foo",
-				"number",
-				parse.NewNumber(1),
+				*parse.NewIdentifier("foo", 1, 2),
+				*parse.NewIdentifier("number", 1, 3),
+				1,
+				1,
+				parse.NewNumber(1, 1, 5),
 			),
 		),
 	)
@@ -174,17 +192,25 @@ func TestLetWithExpression(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
+			1,
+			1,
 			parse.NewDeclaration(
-				"foo",
-				"number",
+				*parse.NewIdentifier("foo", 1, 2),
+				*parse.NewIdentifier("number", 1, 3),
+				1,
+				1,
 				parse.NewOperator(
 					"-",
+					1,
+					8,
 					parse.NewOperator(
 						"+",
-						parse.NewNumber(1),
-						parse.NewNumber(2),
+						1,
+						6,
+						parse.NewNumber(1, 1, 5),
+						parse.NewNumber(2, 1, 7),
 					),
-					parse.NewNumber(3),
+					parse.NewNumber(3, 1, 9),
 				),
 			),
 		),
@@ -205,14 +231,20 @@ func TestOperatorPrecedence(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
+			1,
+			1,
 			parse.NewOperator(
 				"+",
+				1,
+				4,
 				parse.NewOperator(
 					"*",
-					parse.NewNumber(1),
-					parse.NewNumber(2),
+					1,
+					2,
+					parse.NewNumber(1, 1, 1),
+					parse.NewNumber(2, 1, 3),
 				),
-				parse.NewNumber(3),
+				parse.NewNumber(3, 1, 5),
 			),
 		),
 	)
@@ -233,12 +265,18 @@ func TestOperatorAndFunction(t *testing.T) {
 
 	expected := expectStatements(
 		parse.NewStatement(
+			1,
+			1,
 			parse.NewOperator(
 				"+",
-				parse.NewIdentifier("a"),
+				1,
+				2,
+				parse.NewIdentifier("a", 1, 1),
 				parse.NewFunctionCall(
 					"foo",
-					parse.NewIdentifier("b"),
+					1,
+					3,
+					parse.NewIdentifier("b", 1, 5),
 				),
 			),
 		),

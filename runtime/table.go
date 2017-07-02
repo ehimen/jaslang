@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/ehimen/jaslang/parse"
 )
 
 type entry struct {
@@ -44,6 +46,7 @@ func (err UnknownType) Error() string {
 type UnknownOperator struct {
 	operator string
 	operands []Type
+	node     parse.Node
 }
 
 func (err UnknownOperator) Error() string {
@@ -53,7 +56,13 @@ func (err UnknownOperator) Error() string {
 		operandDescription = append(operandDescription, string(operand))
 	}
 
-	return fmt.Sprintf("Unknown operator %s with operands (%s)", err.operator, strings.Join(operandDescription, ", "))
+	msg := fmt.Sprintf("Unknown operator %s with operands (%s)", err.operator, strings.Join(operandDescription, ", "))
+
+	if err.node != nil {
+		msg += fmt.Sprintf(" at position %d, line %d", err.node.Column(), err.node.Line())
+	}
+
+	return msg
 }
 
 func NewTable() *SymbolTable {
