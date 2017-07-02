@@ -18,6 +18,9 @@ var operator = lex.LOperator.String()
 var let = lex.LLet.String()
 var equals = lex.LEquals.String()
 var comma = lex.LComma.String()
+var lif = lex.LIf.String()
+var braceOpen = lex.LBraceOpen.String()
+var braceClose = lex.LBraceClose.String()
 
 func buildDfa(p *parser) (dfa.Machine, error) {
 
@@ -31,6 +34,7 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 
 	defaultExprPrefix := buildExpr(p, builder, "", start, term, start)
 
+	// Assignment is only allowed as the first in statement (not in expr itself).
 	builder.Path(defaultExprPrefix+identifier, equals, equals)
 	buildExpr(p, builder, "assignment", equals, term, start)
 
@@ -43,6 +47,13 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 
 	builder.Path(lfalse, term, start)
 
+	// If statements
+	builder.Path(start, lif, lif)
+	builder.Path(lif, parenOpen, "if-opened")
+	buildExpr(p, builder, "if-condition", "if-opened", parenClose, "if-block")
+	builder.Path("if-block", braceOpen, start)
+	builder.Path(start, braceClose, start)
+
 	builder.Path(let, identifier, "let-identifier")
 	builder.Path("let-identifier", identifier, "let-type-identifier")
 	builder.Path("let-type-identifier", term, start)
@@ -53,7 +64,6 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 
 	builder.WhenEntering(quoted, p.createStringLiteral)
 	builder.WhenEntering(parenClose, p.closeGroupOrFunction)
-	builder.WhenEntering(start, p.closeStatement)
 	builder.WhenEntering(number, p.createNumberLiteral)
 	builder.WhenEntering(ltrue, p.createBooleanLiteral)
 	builder.WhenEntering(lfalse, p.createBooleanLiteral)
@@ -61,6 +71,8 @@ func buildDfa(p *parser) (dfa.Machine, error) {
 	builder.WhenEntering(let, p.createLet)
 	builder.WhenEntering(parenOpen, p.createGroup)
 	builder.WhenEntering(equals, p.createAssignment)
+	builder.WhenEntering(lif, p.createIf)
+	builder.WhenTransitioningVia(term, p.closeStatement)
 
 	builder.Accept(start)
 
@@ -102,6 +114,7 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	b.Path(from, lfalse, exprBoolFalse)
 	b.Path(from, operator, exprOperator)
 	b.Path(from, parenClose, exprParenClose)
+	// TODO: test double if parens: if ((something)) {...
 	b.Path(exprIdentifier, operator, exprOperator)
 	b.Path(exprIdentifier, parenOpen, exprParenOpen)
 	b.Path(exprIdentifier, parenClose, exprParenClose)

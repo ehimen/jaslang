@@ -1,0 +1,14 @@
+<!!Simple optimistic if
+<<<CODE
+if (true) {
+    println("hello world");
+}
+<<<OUTPUT
+hello world
+
+<!Simple pessimistic if
+<<<CODE
+if (false) {
+    println("goodbye world");
+}
+<<<OUTPUT

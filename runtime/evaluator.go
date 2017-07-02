@@ -51,6 +51,10 @@ func (e *evaluator) Evaluate(node parse.Node) error {
 func (e *evaluator) evaluate(node parse.Node) (error, Value) {
 	args := []Value{}
 
+	if i, isIf := node.(*parse.If); isIf {
+		return e.evaluateIf(i, args)
+	}
+
 	if parent, isParent := node.(parse.ContainsChildren); isParent {
 		for _, child := range parent.Children() {
 			// TODO: not recursion to avoid stack overflows.
@@ -176,6 +180,14 @@ func (e *evaluator) evaluateIdentifier(identifier *parse.Identifier, args []Valu
 }
 
 func (e *evaluator) evaluateAssignment(assignment *parse.Assignment, args []Value) (error, Value) {
+	if len(args) != 1 {
+		return errors.New("Assignment must have at exactly one value"), nil
+	}
+
+	return e.setValue(*assignment.Identifier, args[0]), nil
+}
+
+func (e *evaluator) evaluateIf(assignment *parse.If, args []Value) (error, Value) {
 	if len(args) != 1 {
 		return errors.New("Assignment must have at exactly one value"), nil
 	}
