@@ -4,10 +4,10 @@ println("hello world");
 
 "foo" "bar";
 <<<ERROR
-Unexpected token "bar" at position 7, line 3
+Unexpected token "bar" (position 7, line 3)
 
 <!Invalid argument list separator
 <<<CODE
 let str string = "hello", "world";
 <<<ERROR
-Unexpected token "," at position 25, line 1
+Unexpected token "," (position 25, line 1)

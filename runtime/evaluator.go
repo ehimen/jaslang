@@ -163,7 +163,7 @@ func (e *evaluator) evaluateLet(let *parse.Let, args []Value) (error, Value) {
 	} else if err := e.context.Table.Define(let.Identifier.Identifier, valueType); err != nil {
 		return err, nil
 	} else if len(args) == 1 {
-		return e.context.Table.Set(let.Identifier.Identifier, args[0]), nil
+		return e.setValue(*let.Identifier, args[0]), nil
 	} else {
 		return nil, nil
 	}
@@ -172,7 +172,7 @@ func (e *evaluator) evaluateLet(let *parse.Let, args []Value) (error, Value) {
 func (e *evaluator) evaluateIdentifier(identifier *parse.Identifier, args []Value) (error, Value) {
 	val, err := e.context.Table.Get(identifier.Identifier)
 
-	return err, val
+	return applyUnknownIdentifierNode(err, *identifier), val
 }
 
 func (e *evaluator) evaluateAssignment(assignment *parse.Assignment, args []Value) (error, Value) {
@@ -180,5 +180,27 @@ func (e *evaluator) evaluateAssignment(assignment *parse.Assignment, args []Valu
 		return errors.New("Assignment must have at exactly one value"), nil
 	}
 
-	return e.context.Table.Set(assignment.Identifier.Identifier, args[0]), nil
+	return e.setValue(*assignment.Identifier, args[0]), nil
+}
+
+func (e evaluator) setValue(identifier parse.Identifier, value Value) error {
+	err := e.context.Table.Set(identifier.Identifier, value)
+
+	if invalidType, isInvalidType := err.(InvalidType); isInvalidType {
+		invalidType.node = identifier
+
+		return invalidType
+	}
+
+	return applyUnknownIdentifierNode(err, identifier)
+}
+
+func applyUnknownIdentifierNode(err error, identifier parse.Identifier) error {
+	if unknownIdentifier, isUnknownIdentifier := err.(UnknownIdentifier); isUnknownIdentifier {
+		unknownIdentifier.node = identifier
+
+		return unknownIdentifier
+	}
+
+	return nil
 }

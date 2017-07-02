@@ -68,7 +68,14 @@ true
 <<<CODE
 let str string = 42;
 <<<ERROR
-Invalid value for "str". Value 42.000 is not of expected type string
+Invalid value for "str". Value 42.000 is not of expected type string (position 5, line 1)
+
+<!Invalid type assignment deferred
+<<<CODE
+let str string;
+str = 42;
+<<<ERROR
+Invalid value for "str". Value 42.000 is not of expected type string (position 1, line 2)
 
 <!Deferred assignment
 <<<CODE
@@ -90,7 +97,13 @@ println(num);
 <<<CODE
 println(num);
 <<<ERROR
-Unknown identifier: num
+Unknown identifier: num (position 9, line 1)
+
+<!Unknown variable assignment
+<<<CODE
+num = 42;
+<<<ERROR
+Unknown identifier: num (position 1, line 1)
 
 <!Default variable on declaration
 <<<CODE

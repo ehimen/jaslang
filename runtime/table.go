@@ -29,10 +29,15 @@ type SymbolTable struct {
 
 type UnknownIdentifier struct {
 	identifier string
+	node       parse.Node
 }
 
 func (err UnknownIdentifier) Error() string {
-	return fmt.Sprintf("Unknown identifier: %s", err.identifier)
+	msg := fmt.Sprintf("Unknown identifier: %s", err.identifier)
+
+	applyPositionToMessage(&msg, err.node)
+
+	return msg
 }
 
 type UnknownType struct {
@@ -58,11 +63,37 @@ func (err UnknownOperator) Error() string {
 
 	msg := fmt.Sprintf("Unknown operator %s with operands (%s)", err.operator, strings.Join(operandDescription, ", "))
 
-	if err.node != nil {
-		msg += fmt.Sprintf(" at position %d, line %d", err.node.Column(), err.node.Line())
-	}
+	applyPositionToMessage(&msg, err.node)
 
 	return msg
+}
+
+type InvalidType struct {
+	value        Value
+	identifier   string
+	expectedType string
+	node         parse.Node
+}
+
+func (err InvalidType) Error() string {
+	msg := fmt.Sprintf(
+		`Invalid value for "%s". Value %s is not of expected type %s`,
+		err.identifier,
+		err.value,
+		err.expectedType,
+	)
+
+	applyPositionToMessage(&msg, err.node)
+
+	return msg
+}
+
+func applyPositionToMessage(msg *string, node parse.Node) {
+	if node == nil {
+		return
+	}
+
+	*msg += fmt.Sprintf(" (position %d, line %d)", node.Column(), node.Line())
 }
 
 func NewTable() *SymbolTable {
@@ -103,12 +134,11 @@ func (table *SymbolTable) Set(identifier string, value Value) error {
 		return UnknownIdentifier{identifier: identifier}
 	} else {
 		if value.Type() != valueEntry.valueType {
-			return errors.New(fmt.Sprintf(
-				`Invalid value for "%s". Value %s is not of expected type %s`,
-				identifier,
-				value,
-				valueEntry.valueType,
-			))
+			return InvalidType{
+				identifier:   identifier,
+				value:        value,
+				expectedType: string(valueEntry.valueType),
+			}
 		}
 
 		valueEntry.value = value

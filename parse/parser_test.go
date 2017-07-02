@@ -297,7 +297,7 @@ func TestInvalidLetAssigned(t *testing.T) {
 	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
 		t.Fatalf("Expected unexpected token error, but got: %v", err)
 	} else {
-		assert.Equal(t, "Unexpected token \"=\" at position 2, line 1", unexpectedToken.Error())
+		assert.Equal(t, "Unexpected token \"=\" (position 2, line 1)", unexpectedToken.Error())
 	}
 }
 
@@ -314,7 +314,7 @@ func TestInvalidLetWithoutType(t *testing.T) {
 	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
 		t.Fatalf("Expected unexpected token error, but got: %v", err)
 	} else {
-		assert.Equal(t, "Unexpected token \"=\" at position 3, line 1", unexpectedToken.Error())
+		assert.Equal(t, "Unexpected token \"=\" (position 3, line 1)", unexpectedToken.Error())
 	}
 }
 
@@ -332,7 +332,7 @@ func TestInvalidNestedLet(t *testing.T) {
 	if unexpectedToken, isUnexpectedToken := err.(parse.UnexpectedTokenError); !isUnexpectedToken {
 		t.Fatalf("Expected unexpected token error, but got: %v", err)
 	} else {
-		assert.Equal(t, "Unexpected token \"let\" at position 5, line 1", unexpectedToken.Error())
+		assert.Equal(t, "Unexpected token \"let\" (position 5, line 1)", unexpectedToken.Error())
 	}
 }
 

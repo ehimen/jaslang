@@ -34,7 +34,7 @@ type UnexpectedTokenError struct {
 
 func (err UnexpectedTokenError) Error() string {
 	return fmt.Sprintf(
-		"Unexpected token \"%s\" at position %d, line %d",
+		"Unexpected token \"%s\" (position %d, line %d)",
 		err.Lexeme.Value,
 		err.Lexeme.Start,
 		err.Lexeme.Line,

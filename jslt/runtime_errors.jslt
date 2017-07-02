@@ -2,10 +2,10 @@
 <<<CODE
 println("hello" + 2);
 <<<ERROR
-Unknown operator + with operands (string, number) at position 17, line 1
+Unknown operator + with operands (string, number) (position 17, line 1)
 
 <!Operator invalid arguments flipped
 <<<CODE
 println(4 + "hello");
 <<<ERROR
-Unknown operator + with operands (number, string) at position 11, line 1
+Unknown operator + with operands (number, string) (position 11, line 1)
