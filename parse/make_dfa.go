@@ -117,8 +117,8 @@ func buildExpr(p *parser, b dfa.MachineBuilder, prefix string, from string, retu
 	// TODO: test double if parens: if ((something)) {...
 	b.Path(exprIdentifier, operator, exprOperator)
 	b.Path(exprIdentifier, parenOpen, exprParenOpen)
+	b.Path(exprIdentifier, returnVia, returnTo) // We do this before parenClose as if requires this to close the condition
 	b.Path(exprIdentifier, parenClose, exprParenClose)
-	b.Path(exprIdentifier, returnVia, returnTo)
 	b.Path(exprIdentifier, comma, exprComma)
 	b.Path(exprParenOpen, quoted, exprString)
 	b.Path(exprParenOpen, number, exprNumber)

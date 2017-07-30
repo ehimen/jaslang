@@ -7,6 +7,7 @@ import (
 
 	"errors"
 
+	"github.com/ehimen/jaslang/config"
 	"github.com/ehimen/jaslang/dfa"
 	"github.com/ehimen/jaslang/lex"
 )
@@ -33,12 +34,22 @@ type UnexpectedTokenError struct {
 }
 
 func (err UnexpectedTokenError) Error() string {
-	return fmt.Sprintf(
+	msg := fmt.Sprintf(
 		"Unexpected token \"%s\" (position %d, line %d)",
 		err.Lexeme.Value,
 		err.Lexeme.Start,
 		err.Lexeme.Line,
 	)
+
+	if config.Debug {
+		msg = fmt.Sprintf(
+			"%s\nDebug: %s",
+			msg,
+			err.Debug,
+		)
+	}
+
+	return msg
 }
 
 type InvalidNumberError struct {

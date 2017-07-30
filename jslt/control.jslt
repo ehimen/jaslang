@@ -1,4 +1,4 @@
-<!!Simple optimistic if
+<!Simple optimistic if
 <<<CODE
 if (true) {
     println("hello world");
@@ -6,7 +6,7 @@ if (true) {
 <<<OUTPUT
 hello world
 
-<!!Simple optimistic if with multiple statements
+<!Simple optimistic if with multiple statements
 <<<CODE
 if (true) {
     println("hello world 1");
@@ -24,3 +24,12 @@ if (false) {
     println("goodbye world");
 }
 <<<OUTPUT
+
+<!Variable if
+<<<CODE
+let bool boolean = true;
+if (bool) {
+    println("hello world");
+}
+<<<OUTPUT
+hello world

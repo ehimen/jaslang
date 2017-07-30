@@ -32,6 +32,8 @@ func (builder *machineBuilder) Path(from string, how string, to string) error {
 	}
 
 	if _, exists := builder.machine.states[from].paths[how]; exists {
+		// TODO: not panic?!
+		//panic(fmt.Sprintf(`Path "%s" already exists from "%s"`, how, from))
 		return errors.New(fmt.Sprintf(`Path "%s" already exists from "%s"`, how, from))
 	}
 
