@@ -342,6 +342,10 @@ func (i *If) push(child Node) (error, bool) {
 	return nil, true
 }
 
+func (i If) Condition() Node {
+	return i.condition
+}
+
 func NewStatement(line int, column int, children ...Node) *Statement {
 	return &Statement{ParentNode: ParentNode{children: children}, position: position{line: line, column: column}}
 }

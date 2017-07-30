@@ -52,7 +52,7 @@ func (e *evaluator) evaluate(node parse.Node) (error, Value) {
 	args := []Value{}
 
 	if i, isIf := node.(*parse.If); isIf {
-		return e.evaluateIf(i, args)
+		return e.evaluateIf(i), nil
 	}
 
 	if parent, isParent := node.(parse.ContainsChildren); isParent {
@@ -187,12 +187,24 @@ func (e *evaluator) evaluateAssignment(assignment *parse.Assignment, args []Valu
 	return e.setValue(*assignment.Identifier, args[0]), nil
 }
 
-func (e *evaluator) evaluateIf(assignment *parse.If, args []Value) (error, Value) {
-	if len(args) != 1 {
-		return errors.New("Assignment must have at exactly one value"), nil
+func (e *evaluator) evaluateIf(node *parse.If) error {
+	err, result := e.evaluate(node.Condition())
+
+	if err != nil {
+		return err
 	}
 
-	return e.setValue(*assignment.Identifier, args[0]), nil
+	if boolValue, isBool := result.(Boolean); !isBool {
+		return errors.New("If condition must evaluate to boolean")
+	} else {
+		if boolValue.Value {
+			for _, child := range node.ParentNode.Children() {
+				e.evaluate(child)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (e evaluator) setValue(identifier parse.Identifier, value Value) error {
