@@ -33,3 +33,18 @@ if (bool) {
 }
 <<<OUTPUT
 hello world
+
+<!if - operator or
+<<<CODE
+if (true || false) {
+    println("hello world");
+}
+<<<OUTPUT
+hello world
+
+<!!if - operator and
+<<<CODE
+if (true && false) {
+    println("hello world");
+}
+<<<OUTPUT
