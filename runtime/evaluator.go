@@ -51,6 +51,10 @@ func (e *evaluator) Evaluate(node parse.Node) error {
 func (e *evaluator) evaluate(node parse.Node) (error, Value) {
 	args := []Value{}
 
+	if i, isIf := node.(*parse.If); isIf {
+		return e.evaluateIf(i), nil
+	}
+
 	if parent, isParent := node.(parse.ContainsChildren); isParent {
 		for _, child := range parent.Children() {
 			// TODO: not recursion to avoid stack overflows.
@@ -181,6 +185,26 @@ func (e *evaluator) evaluateAssignment(assignment *parse.Assignment, args []Valu
 	}
 
 	return e.setValue(*assignment.Identifier, args[0]), nil
+}
+
+func (e *evaluator) evaluateIf(node *parse.If) error {
+	err, result := e.evaluate(node.Condition())
+
+	if err != nil {
+		return err
+	}
+
+	if boolValue, isBool := result.(Boolean); !isBool {
+		return errors.New("If condition must evaluate to boolean")
+	} else {
+		if boolValue.Value {
+			for _, child := range node.ParentNode.Children() {
+				e.evaluate(child)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (e evaluator) setValue(identifier parse.Identifier, value Value) error {

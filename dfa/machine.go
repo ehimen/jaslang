@@ -24,10 +24,11 @@ type trace struct {
 }
 
 type machine struct {
-	current  *state
-	states   map[string]*state
-	finished bool
-	route    []trace
+	current     *state
+	states      map[string]*state
+	finished    bool
+	route       []trace
+	transitions map[string]func() error
 }
 
 type UnacceptableMachineFinishState struct {
@@ -58,7 +59,7 @@ func (err InvalidMachineTransition) Error() string {
 }
 
 func newMachine() *machine {
-	return &machine{states: make(map[string]*state), finished: false}
+	return &machine{states: make(map[string]*state), finished: false, transitions: make(map[string]func() error)}
 }
 
 func newState(name string) *state {
@@ -81,6 +82,12 @@ func (machine *machine) Transition(how string) error {
 
 	machine.current = machine.current.paths[how]
 	machine.route = append(machine.route, trace{path: how, state: *machine.current})
+
+	if fn, exists := machine.transitions[how]; exists {
+		if err := fn(); err != nil {
+			return err
+		}
+	}
 
 	// Call all functions as we enter this new state
 	for _, fn := range machine.current.whenEntering {

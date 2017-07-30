@@ -314,6 +314,38 @@ func (group Group) MarshalJSON() ([]byte, error) {
 	})
 }
 
+type If struct {
+	condition Node
+	position
+	ParentNode
+}
+
+func (i If) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Type      string
+		Condition Node
+		Children  []Node
+	}{
+		Type:      "if",
+		Condition: i.condition,
+		Children:  i.children,
+	})
+}
+
+func (i *If) push(child Node) (error, bool) {
+	if nil == i.condition {
+		i.condition = child
+	} else {
+		return i.ParentNode.push(child)
+	}
+
+	return nil, true
+}
+
+func (i If) Condition() Node {
+	return i.condition
+}
+
 func NewStatement(line int, column int, children ...Node) *Statement {
 	return &Statement{ParentNode: ParentNode{children: children}, position: position{line: line, column: column}}
 }
@@ -357,4 +389,8 @@ func NewGroup(line int, column int) *Group {
 
 func NewAssignment(line int, column int) *Assignment {
 	return &Assignment{position: position{line: line, column: column}}
+}
+
+func NewIf(line int, column int) *If {
+	return &If{position: position{line: line, column: column}}
 }

@@ -11,6 +11,7 @@ type MachineBuilder interface {
 	WhenEntering(string, func() error) error
 	Accept(state string) error
 	Start(state string) (Machine, error)
+	WhenTransitioningVia(string, func() error)
 }
 
 type machineBuilder struct {
@@ -31,12 +32,18 @@ func (builder *machineBuilder) Path(from string, how string, to string) error {
 	}
 
 	if _, exists := builder.machine.states[from].paths[how]; exists {
+		// TODO: not panic?!
+		//panic(fmt.Sprintf(`Path "%s" already exists from "%s"`, how, from))
 		return errors.New(fmt.Sprintf(`Path "%s" already exists from "%s"`, how, from))
 	}
 
 	builder.machine.states[from].paths[how] = builder.machine.states[to]
 
 	return nil
+}
+
+func (builder *machineBuilder) WhenTransitioningVia(how string, what func() error) {
+	builder.machine.transitions[how] = what
 }
 
 func (builder *machineBuilder) Paths(from []string, how string, to []string) error {

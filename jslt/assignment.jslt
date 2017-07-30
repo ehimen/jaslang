@@ -122,3 +122,11 @@ false
 42.000
 hello
 true
+
+<!Invalid assignment context
+<<<CODE
+let a number;
+let b number;
+a = b = 42;
+<<<ERROR
+Unexpected token "=" (position 7, line 3)

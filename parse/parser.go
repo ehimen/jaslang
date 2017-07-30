@@ -7,6 +7,7 @@ import (
 
 	"errors"
 
+	"github.com/ehimen/jaslang/config"
 	"github.com/ehimen/jaslang/dfa"
 	"github.com/ehimen/jaslang/lex"
 )
@@ -33,12 +34,22 @@ type UnexpectedTokenError struct {
 }
 
 func (err UnexpectedTokenError) Error() string {
-	return fmt.Sprintf(
+	msg := fmt.Sprintf(
 		"Unexpected token \"%s\" (position %d, line %d)",
 		err.Lexeme.Value,
 		err.Lexeme.Start,
 		err.Lexeme.Line,
 	)
+
+	if config.Debug {
+		msg = fmt.Sprintf(
+			"%s\nDebug: %s",
+			msg,
+			err.Debug,
+		)
+	}
+
+	return msg
 }
 
 type InvalidNumberError struct {
@@ -265,6 +276,12 @@ func (p *parser) createAssignment() error {
 	return nil
 }
 
+func (p *parser) createIf() error {
+	p.push(NewIf(p.current.Line, p.current.Start))
+
+	return nil
+}
+
 // Closes all open nodes up the stack
 // until we close a statement node.
 func (p *parser) closeStatement() error {
@@ -272,11 +289,26 @@ func (p *parser) closeStatement() error {
 
 	for _, isStatement := context.(*Statement); !isStatement && len(p.nodeStack) > 1; {
 		// Close while the head of the stack isn't a statement.
-		//println("Closing because not statement")
 		p.closeNode()
 	}
 
 	// Close one more time. This closes the statement
+	p.closeNode()
+
+	return nil
+}
+
+// Closes all open nodes up the stack
+// until we close an if node.
+func (p *parser) closeIf() error {
+	context := getContext(p)
+
+	for _, isIf := context.(*If); !isIf && len(p.nodeStack) > 1; {
+		// Close while the head of the stack isn't a statement.
+		p.closeNode()
+	}
+
+	// Close one more time. This closes the if
 	p.closeNode()
 
 	return nil
